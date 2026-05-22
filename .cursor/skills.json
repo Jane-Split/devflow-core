@@ -1,0 +1,175 @@
+{
+  "$schema": "https://cursor.sh/schemas/skills.json",
+  "version": "1.0.0",
+  "name": "DevFlow",
+  "description": "AI 驱动的开发工作流编排工具",
+  "skills": [
+    {
+      "id": "devflow-init",
+      "command": "/devflow-init",
+      "name": "初始化项目",
+      "description": "初始化 DevFlow 配置，分析项目结构",
+      "icon": "🚀",
+      "category": "DevFlow",
+      "prompt": "执行 DevFlow 项目初始化。根据用户提供的项目名称和类型，创建配置文件并分析项目结构。",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "项目名称",
+          "required": false
+        },
+        {
+          "name": "type",
+          "type": "enum",
+          "description": "项目类型",
+          "enum": ["frontend", "backend", "fullstack", "microservice"],
+          "required": false
+        },
+        {
+          "name": "force",
+          "type": "boolean",
+          "description": "强制重新初始化",
+          "default": false
+        }
+      ],
+      "handler": {
+        "type": "shell",
+        "command": "node",
+        "args": [
+          "${workspaceFolder}/node_modules/@devflow-ai/core/bin/devflow.js",
+          "init"
+        ]
+      },
+      "context": {
+        "requiresWorkspace": true,
+        "reads": ["${workspaceFolder}/package.json", "${workspaceFolder}/.devflow/config.yaml"],
+        "writes": ["${workspaceFolder}/.devflow/"]
+      }
+    },
+    {
+      "id": "devflow-analyze",
+      "command": "/devflow-analyze",
+      "name": "分析项目",
+      "description": "深度分析项目技术栈、规范和组件",
+      "icon": "🔍",
+      "category": "DevFlow",
+      "prompt": "执行 DevFlow 项目分析。分析项目的技术栈、代码规范、组件库和架构模式。",
+      "parameters": [
+        {
+          "name": "deep",
+          "type": "boolean",
+          "description": "执行深度分析",
+          "default": false
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "分析报告输出路径",
+          "required": false
+        }
+      ],
+      "handler": {
+        "type": "shell",
+        "command": "node",
+        "args": [
+          "${workspaceFolder}/node_modules/@devflow-ai/core/bin/devflow.js",
+          "analyze"
+        ]
+      },
+      "context": {
+        "requiresWorkspace": true,
+        "requiresInit": true,
+        "reads": ["${workspaceFolder}/.devflow/", "${workspaceFolder}/src/"]
+      }
+    },
+    {
+      "id": "devflow-run",
+      "command": "/devflow-run",
+      "name": "执行工作流",
+      "description": "执行完整的 8 阶段开发工作流",
+      "icon": "▶️",
+      "category": "DevFlow",
+      "prompt": "执行 DevFlow 工作流。根据需求文档或描述，执行从研究到回归测试的完整开发流程。",
+      "parameters": [
+        {
+          "name": "phase",
+          "type": "enum",
+          "description": "执行阶段",
+          "enum": ["all", "research", "analyze", "design", "split", "dev", "test", "fix", "regression"],
+          "default": "all"
+        },
+        {
+          "name": "parallel",
+          "type": "boolean",
+          "description": "启用并行开发",
+          "default": false
+        },
+        {
+          "name": "requirement",
+          "type": "string",
+          "description": "需求描述或需求文档路径",
+          "required": false
+        }
+      ],
+      "handler": {
+        "type": "shell",
+        "command": "node",
+        "args": [
+          "${workspaceFolder}/node_modules/@devflow-ai/core/bin/devflow.js",
+          "run"
+        ]
+      },
+      "context": {
+        "requiresWorkspace": true,
+        "requiresInit": true,
+        "reads": ["${workspaceFolder}/.devflow/", "${workspaceFolder}/docs/"],
+        "writes": ["${workspaceFolder}/.devflow/output/"]
+      }
+    },
+    {
+      "id": "devflow-test",
+      "command": "/devflow-test",
+      "name": "运行测试",
+      "description": "执行单元测试、集成测试或 E2E 测试",
+      "icon": "🧪",
+      "category": "DevFlow",
+      "prompt": "执行 DevFlow 测试。运行单元测试、集成测试或端到端测试，并生成测试报告。",
+      "parameters": [
+        {
+          "name": "type",
+          "type": "enum",
+          "description": "测试类型",
+          "enum": ["unit", "integration", "e2e", "all"],
+          "default": "all"
+        },
+        {
+          "name": "pattern",
+          "type": "string",
+          "description": "测试文件匹配模式",
+          "required": false
+        },
+        {
+          "name": "watch",
+          "type": "boolean",
+          "description": "监听模式",
+          "default": false
+        }
+      ],
+      "handler": {
+        "type": "shell",
+        "command": "node",
+        "args": [
+          "${workspaceFolder}/node_modules/@devflow-ai/core/bin/devflow.js",
+          "test"
+        ]
+      },
+      "context": {
+        "requiresWorkspace": true,
+        "requiresInit": true,
+        "reads": ["${workspaceFolder}/tests/", "${workspaceFolder}/src/"],
+        "writes": ["${workspaceFolder}/.devflow/test-reports/"]
+      }
+    }
+  ]
+}

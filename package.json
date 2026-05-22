@@ -1,0 +1,104 @@
+{
+  "name": "@devflow-ai/core",
+  "version": "0.1.0",
+  "description": "AI-powered development workflow orchestration tool - automates research, design, development, testing, and deployment",
+  "type": "module",
+  "main": "./src/cli/index.js",
+  "bin": {
+    "devflow": "./bin/devflow.js"
+  },
+  "exports": {
+    ".": "./src/cli/index.js",
+    "./core/*": "./src/core/*.js",
+    "./memory/*": "./src/memory/*.js",
+    "./analyzer/*": "./src/analyzer/*.js",
+    "./orchestrator/*": "./src/orchestrator/*.js",
+    "./testing/*": "./src/testing/*.js",
+    "./utils/*": "./src/utils/*.js"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "lint": "eslint src/ bin/ --ext .js",
+    "lint:fix": "eslint src/ bin/ --ext .js --fix",
+    "format": "prettier --write 'src/**/*.js' 'bin/**/*.js'",
+    "format:check": "prettier --check 'src/**/*.js' 'bin/**/*.js'",
+    "prepare": "npm run lint && npm run format:check",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "keywords": [
+    "ai",
+    "development",
+    "workflow",
+    "agent",
+    "automation",
+    "testing",
+    "orchestration",
+    "cursor",
+    "trae",
+    "windsurf",
+    "cline",
+    "copilot"
+  ],
+  "author": "DevFlow AI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devflow-ai/core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devflow-ai/core/issues"
+  },
+  "homepage": "https://github.com/devflow-ai/core#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "inquirer": "^9.2.20",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.15",
+    "yaml": "^2.4.2",
+    "zod": "^3.23.8",
+    "cosmiconfig": "^9.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "optionalDependencies": {
+    "onnxruntime-node": "^1.17.3",
+    "@xenova/transformers": "^2.17.2",
+    "openai": "^4.47.1",
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.2.5"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "extensionsToTreatAsEsm": [".js"],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  }
+}
