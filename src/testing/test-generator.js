@@ -3,7 +3,6 @@
  * Generates unit, integration, and E2E tests from interface specs
  */
 
-import { TestingError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('TestGenerator');
@@ -139,11 +138,12 @@ describe('${spec.name}', () => {
    * Generate error handling tests
    */
   _generateErrorTests(spec) {
-    return [{
-      name: `${spec.name}.should_handle_errors`,
-      type: TestType.UNIT,
-      framework: this.framework,
-      content: this._generateJestTest(`
+    return [
+      {
+        name: `${spec.name}.should_handle_errors`,
+        type: TestType.UNIT,
+        framework: this.framework,
+        content: this._generateJestTest(`
 describe('${spec.name}', () => {
   describe('error handling', () => {
     it('should throw on invalid input', async () => {
@@ -169,8 +169,9 @@ describe('${spec.name}', () => {
   });
 });
       `),
-      filePath: this._getTestFilePath(spec.name, 'errors.test'),
-    }];
+        filePath: this._getTestFilePath(spec.name, 'errors.test'),
+      },
+    ];
   }
 
   /**
@@ -195,10 +196,12 @@ ${content}
       return '// No setup needed';
     }
 
-    return params.map(p => {
-      const mock = this._generateMock(p);
-      return `const ${p.name} = ${mock};`;
-    }).join('\n');
+    return params
+      .map(p => {
+        const mock = this._generateMock(p);
+        return `const ${p.name} = ${mock};`;
+      })
+      .join('\n');
   }
 
   /**
@@ -251,11 +254,15 @@ ${content}
     if (params.length === 0) {
       return 'undefined';
     }
-    
-    const emptyParams = params.map(p => {
-      if (p.required) return null;
-      return `${p.name}: null`;
-    }).filter(p => p !== null);
+
+    const emptyParams = params
+      .map(p => {
+        if (p.required) {
+          return null;
+        }
+        return `${p.name}: null`;
+      })
+      .filter(p => p !== null);
 
     return emptyParams.length > 0 ? `{ ${emptyParams.join(', ')} }` : 'undefined';
   }
@@ -289,7 +296,10 @@ ${content}
    */
   _getTestFilePath(name, suffix = 'test') {
     const ext = this.framework === TestFramework.PYTEST ? '.py' : '.test.js';
-    const baseName = name.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+    const baseName = name
+      .replace(/([A-Z])/g, '-$1')
+      .toLowerCase()
+      .replace(/^-/, '');
     return `${baseName}.${suffix}${ext}`;
   }
 
@@ -317,41 +327,45 @@ ${content}
    * Generate Playwright test file
    */
   _generatePlaywrightTest(spec, steps, assertions) {
-    const testSteps = steps.map((step, index) => {
-      switch (step.action) {
-        case 'navigate':
-          return `    await page.goto('${step.url}');`;
-        case 'click':
-          return `    await page.click('${step.selector}');`;
-        case 'fill':
-          return `    await page.fill('${step.selector}', '${step.value}');`;
-        case 'type':
-          return `    await page.type('${step.selector}', '${step.value}');`;
-        case 'wait':
-          return `    await page.waitForSelector('${step.selector}');`;
-        case 'hover':
-          return `    await page.hover('${step.selector}');`;
-        case 'screenshot':
-          return `    await page.screenshot({ path: '${step.path || 'screenshot.png'}' });`;
-        default:
-          return `    // Unknown action: ${step.action}`;
-      }
-    }).join('\n');
+    const testSteps = steps
+      .map(step => {
+        switch (step.action) {
+          case 'navigate':
+            return `    await page.goto('${step.url}');`;
+          case 'click':
+            return `    await page.click('${step.selector}');`;
+          case 'fill':
+            return `    await page.fill('${step.selector}', '${step.value}');`;
+          case 'type':
+            return `    await page.type('${step.selector}', '${step.value}');`;
+          case 'wait':
+            return `    await page.waitForSelector('${step.selector}');`;
+          case 'hover':
+            return `    await page.hover('${step.selector}');`;
+          case 'screenshot':
+            return `    await page.screenshot({ path: '${step.path || 'screenshot.png'}' });`;
+          default:
+            return `    // Unknown action: ${step.action}`;
+        }
+      })
+      .join('\n');
 
-    const testAssertions = assertions.map(a => {
-      switch (a.type) {
-        case 'visible':
-          return `    await expect(page.locator('${a.selector}')).toBeVisible();`;
-        case 'text':
-          return `    await expect(page.locator('${a.selector}')).toHaveText('${a.expected}');`;
-        case 'count':
-          return `    await expect(page.locator('${a.selector}')).toHaveCount(${a.count});`;
-        case 'url':
-          return `    await expect(page).toHaveURL('${a.url}');`;
-        default:
-          return `    // Unknown assertion: ${a.type}`;
-      }
-    }).join('\n');
+    const testAssertions = assertions
+      .map(a => {
+        switch (a.type) {
+          case 'visible':
+            return `    await expect(page.locator('${a.selector}')).toBeVisible();`;
+          case 'text':
+            return `    await expect(page.locator('${a.selector}')).toHaveText('${a.expected}');`;
+          case 'count':
+            return `    await expect(page.locator('${a.selector}')).toHaveCount(${a.count});`;
+          case 'url':
+            return `    await expect(page).toHaveURL('${a.url}');`;
+          default:
+            return `    // Unknown assertion: ${a.type}`;
+        }
+      })
+      .join('\n');
 
     return `/**
  * Auto-generated E2E test
@@ -476,17 +490,23 @@ describe('${apiSpec.name} API', () => {
    * Generate request body
    */
   _generateRequestBody(body) {
-    if (!body) return '// No body required';
-    return Object.entries(body).map(([key, value]) => {
-      return `${key}: '${value || 'test-value'}'`;
-    }).join(',\n          ');
+    if (!body) {
+      return '// No body required';
+    }
+    return Object.entries(body)
+      .map(([key, value]) => {
+        return `${key}: '${value || 'test-value'}'`;
+      })
+      .join(',\n          ');
   }
 
   /**
    * Generate invalid request
    */
   _generateInvalidRequest(body) {
-    if (!body) return 'invalid: true';
+    if (!body) {
+      return 'invalid: true';
+    }
     const key = Object.keys(body)[0];
     return `${key}: null`;
   }

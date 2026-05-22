@@ -3,7 +3,7 @@
  * Unified interface for memory operations with category-based organization
  */
 
-import { MemoryError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, MemoryError } from '../utils/errors.js';
 
 /**
  * Memory categories
@@ -14,20 +14,20 @@ export const MemoryCategories = {
   PROJECT_PROFILE: 'project-profile',
   REQUIREMENT: 'requirements',
   DESIGN: 'design',
-  
+
   // Task management
   TASK: 'tasks',
   TASK_CARD: 'task-cards',
-  
+
   // Execution tracking
   EXECUTION: 'execution',
   EXECUTION_LOG: 'execution-logs',
-  
+
   // Learning and patterns
   LEARNING: 'learning',
   PATTERN: 'patterns',
   PITFALL: 'pitfalls',
-  
+
   // Vector index
   VECTOR_INDEX: 'vector-index',
 };
@@ -37,14 +37,14 @@ export const MemoryCategories = {
  * Standard metadata for all memory entries
  */
 export const MemoryMetadataSchema = {
-  id: 'string',           // Unique identifier
-  category: 'string',     // Memory category
-  createdAt: 'string',    // ISO timestamp
-  updatedAt: 'string',    // ISO timestamp
-  version: 'number',      // Version for optimistic locking
-  tags: 'array',          // Array of string tags
-  source: 'string',       // Source of the memory (e.g., 'analyzer', 'orchestrator')
-  embedding: 'object',    // Optional embedding vector
+  id: 'string', // Unique identifier
+  category: 'string', // Memory category
+  createdAt: 'string', // ISO timestamp
+  updatedAt: 'string', // ISO timestamp
+  version: 'number', // Version for optimistic locking
+  tags: 'array', // Array of string tags
+  source: 'string', // Source of the memory (e.g., 'analyzer', 'orchestrator')
+  embedding: 'object', // Optional embedding vector
 };
 
 /**
@@ -64,91 +64,73 @@ export class MemoryProtocol {
 
   /**
    * Read a memory entry
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
    * @returns {Promise<Object>} Memory entry with content and metadata
    */
-  async read(category, id) {
-    throw new MemoryError(
-      'read() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async read(_category, _id) {
+    throw new MemoryError('read() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Write a memory entry
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
-   * @param {Object} content - Entry content
-   * @param {Object} metadata - Optional metadata
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
+   * @param {Object} _content - Entry content
+   * @param {Object} _metadata - Optional metadata
    * @returns {Promise<Object>} Written entry
    */
-  async write(category, id, content, metadata = {}) {
-    throw new MemoryError(
-      'write() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async write(_category, _id, _content, _metadata = {}) {
+    throw new MemoryError('write() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Delete a memory entry
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
    * @returns {Promise<boolean>} Success status
    */
-  async delete(category, id) {
-    throw new MemoryError(
-      'delete() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async delete(_category, _id) {
+    throw new MemoryError('delete() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * List entries in a category
-   * @param {string} category - Memory category
-   * @param {Object} options - List options (limit, offset, sort)
+   * @param {string} _category - Memory category
+   * @param {Object} _options - List options (limit, offset, sort)
    * @returns {Promise<Array>} List of entry summaries
    */
-  async list(category, options = {}) {
-    throw new MemoryError(
-      'list() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async list(_category, _options = {}) {
+    throw new MemoryError('list() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Search for entries
-   * @param {string} query - Search query
-   * @param {Object} options - Search options (category, limit, threshold)
+   * @param {string} _query - Search query
+   * @param {Object} _options - Search options (category, limit, threshold)
    * @returns {Promise<Array>} Search results with scores
    */
-  async search(query, options = {}) {
-    throw new MemoryError(
-      'search() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async search(_query, _options = {}) {
+    throw new MemoryError('search() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Check if an entry exists
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
    * @returns {Promise<boolean>} Existence status
    */
-  async exists(category, id) {
-    throw new MemoryError(
-      'exists() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async exists(_category, _id) {
+    throw new MemoryError('exists() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Get entry metadata without content
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
    * @returns {Promise<Object>} Entry metadata
    */
-  async getMetadata(category, id) {
+  async getMetadata(_category, _id) {
     throw new MemoryError(
       'getMetadata() must be implemented by subclass',
       ErrorCodes.NOT_IMPLEMENTED
@@ -157,12 +139,12 @@ export class MemoryProtocol {
 
   /**
    * Update entry metadata
-   * @param {string} category - Memory category
-   * @param {string} id - Entry identifier
-   * @param {Object} metadata - Metadata updates
+   * @param {string} _category - Memory category
+   * @param {string} _id - Entry identifier
+   * @param {Object} _metadata - Metadata updates
    * @returns {Promise<Object>} Updated metadata
    */
-  async updateMetadata(category, id, metadata) {
+  async updateMetadata(_category, _id, _metadata) {
     throw new MemoryError(
       'updateMetadata() must be implemented by subclass',
       ErrorCodes.NOT_IMPLEMENTED
@@ -171,27 +153,21 @@ export class MemoryProtocol {
 
   /**
    * Export memory data
-   * @param {Object} options - Export options
+   * @param {Object} _options - Export options
    * @returns {Promise<Object>} Exported data
    */
-  async export(options = {}) {
-    throw new MemoryError(
-      'export() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async export(_options = {}) {
+    throw new MemoryError('export() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
    * Import memory data
-   * @param {Object} data - Data to import
-   * @param {Object} options - Import options
+   * @param {Object} _data - Data to import
+   * @param {Object} _options - Import options
    * @returns {Promise<Object>} Import result
    */
-  async import(data, options = {}) {
-    throw new MemoryError(
-      'import() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async import(_data, _options = {}) {
+    throw new MemoryError('import() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
@@ -240,7 +216,7 @@ export class MemoryProtocol {
    */
   _createMetadata(category, id, overrides = {}) {
     const now = new Date().toISOString();
-    
+
     return {
       id,
       category,

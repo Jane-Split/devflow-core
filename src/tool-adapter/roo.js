@@ -5,9 +5,6 @@
 
 import { ClineAdapter } from './cline.js';
 import { ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('RooAdapter');
 
 /**
  * Roo Code Tool Adapter
@@ -81,7 +78,7 @@ export class RooAdapter extends ClineAdapter {
    * @param {Object} options - Options
    * @returns {string} Subagent instructions
    */
-  buildSubagentCommand(task, options = {}) {
+  buildSubagentCommand(task, _options = {}) {
     const mode = this._suggestMode(task);
 
     const lines = [
@@ -120,12 +117,12 @@ export class RooAdapter extends ClineAdapter {
     const modeMap = {
       'api-endpoint': 'architect',
       'ui-component': 'code',
-      'service': 'code',
-      'bugfix': 'debug',
-      'test': 'code',
-      'refactor': 'code',
-      'design': 'architect',
-      'analysis': 'ask',
+      service: 'code',
+      bugfix: 'debug',
+      test: 'code',
+      refactor: 'code',
+      design: 'architect',
+      analysis: 'ask',
     };
 
     return modeMap[task.type] || 'code';

@@ -4,9 +4,6 @@
  */
 
 import { BaseToolAdapter, ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('CursorAdapter');
 
 /**
  * Cursor Tool Adapter
@@ -82,14 +79,14 @@ export class CursorAdapter extends BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {string} Subagent command
    */
-  buildSubagentCommand(task, options = {}) {
+  buildSubagentCommand(task, _options = {}) {
     const {
-      agentType = 'general_purpose_task',
+      agentType: _agentType = 'general_purpose_task',
       description = task.title || task.name,
-    } = options;
+    } = _options;
 
     // Cursor subagent format
-    return `@agent ${agentType} "${description}"`;
+    return `@agent ${_agentType} "${description}"`;
   }
 
   /**
@@ -118,7 +115,9 @@ export class CursorAdapter extends BaseToolAdapter {
 
     lines.push('---');
     lines.push('');
-    lines.push('Execute each task using the subagent commands above. Report back when all tasks are complete.');
+    lines.push(
+      'Execute each task using the subagent commands above. Report back when all tasks are complete.'
+    );
 
     return lines.join('\n');
   }

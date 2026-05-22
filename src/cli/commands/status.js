@@ -3,11 +3,9 @@
  * Shows current project status and workflow progress
  */
 
-import { Command } from 'commander';
 import { Logger } from '../../utils/logger.js';
 import { ConfigManager } from '../../core/config.js';
 import { MemoryManager } from '../../memory/manager.js';
-import { TaskGraph } from '../../orchestrator/task-graph.js';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
@@ -25,7 +23,7 @@ export function registerStatusCommand(program) {
     .option('-v, --verbose', 'Show detailed information', false)
     .option('-j, --json', 'Output as JSON', false)
     .option('--phase <phase>', 'Show status for specific phase')
-    .action(async (options) => {
+    .action(async options => {
       const spinner = ora('Loading project status...').start();
 
       try {
@@ -38,7 +36,6 @@ export function registerStatusCommand(program) {
         } else {
           displayStatus(status, options);
         }
-
       } catch (error) {
         spinner.fail('Failed to load status');
         logger.error(`Status command failed: ${error.message}`);
@@ -52,7 +49,7 @@ export function registerStatusCommand(program) {
  * @param {Object} options - Options
  * @returns {Promise<Object>} Project status
  */
-async function getProjectStatus(options) {
+async function getProjectStatus(_options) {
   const configManager = new ConfigManager();
   const config = configManager.getConfig();
 
@@ -86,9 +83,8 @@ async function getProjectStatus(options) {
   const workflowState = await memoryManager.getWorkflowState();
 
   // Calculate progress
-  const progress = taskStats.total > 0
-    ? ((taskStats.completed / taskStats.total) * 100).toFixed(1)
-    : 0;
+  const progress =
+    taskStats.total > 0 ? ((taskStats.completed / taskStats.total) * 100).toFixed(1) : 0;
 
   return {
     project: {
@@ -96,12 +92,14 @@ async function getProjectStatus(options) {
       type: profile?.content?.type || config.project?.type || 'Unknown',
       root: process.cwd(),
     },
-    profile: profile ? {
-      analyzed: true,
-      lastUpdated: profile.updatedAt || profile.createdAt,
-    } : {
-      analyzed: false,
-    },
+    profile: profile
+      ? {
+          analyzed: true,
+          lastUpdated: profile.updatedAt || profile.createdAt,
+        }
+      : {
+          analyzed: false,
+        },
     tasks: taskStats,
     designs: {
       total: designs.length,
@@ -164,7 +162,7 @@ function displayStatus(status, options) {
     ['Pending', tasks.pending, `${((tasks.pending / total) * 100).toFixed(0)}%`],
     ['In Progress', tasks.inProgress, `${((tasks.inProgress / total) * 100).toFixed(0)}%`],
     ['Completed', tasks.completed, `${((tasks.completed / total) * 100).toFixed(0)}%`],
-    ['Blocked', tasks.blocked, `${((tasks.blocked / total) * 100).toFixed(0)}%`],
+    ['Blocked', tasks.blocked, `${((tasks.blocked / total) * 100).toFixed(0)}%`]
   );
 
   console.log(taskTable.toString());
@@ -219,9 +217,14 @@ function displayStatus(status, options) {
   }
 
   // Overall Status
-  const statusColor = status.progress.status === 'complete' ? chalk.green :
-    status.progress.status === 'in_progress' ? chalk.yellow :
-      status.progress.status === 'blocked' ? chalk.red : chalk.gray;
+  const statusColor =
+    status.progress.status === 'complete'
+      ? chalk.green
+      : status.progress.status === 'in_progress'
+        ? chalk.yellow
+        : status.progress.status === 'blocked'
+          ? chalk.red
+          : chalk.gray;
 
   console.log(statusColor.bold(`Status: ${status.progress.status.toUpperCase()}`));
   console.log();
@@ -234,10 +237,18 @@ function displayStatus(status, options) {
  * @returns {string} Overall status
  */
 function getOverallStatus(taskStats, workflow) {
-  if (taskStats.blocked > 0) return 'blocked';
-  if (taskStats.completed === taskStats.total && taskStats.total > 0) return 'complete';
-  if (taskStats.inProgress > 0 || workflow?.currentPhase) return 'in_progress';
-  if (taskStats.pending > 0) return 'pending';
+  if (taskStats.blocked > 0) {
+    return 'blocked';
+  }
+  if (taskStats.completed === taskStats.total && taskStats.total > 0) {
+    return 'complete';
+  }
+  if (taskStats.inProgress > 0 || workflow?.currentPhase) {
+    return 'in_progress';
+  }
+  if (taskStats.pending > 0) {
+    return 'pending';
+  }
   return 'not_started';
 }
 
@@ -253,8 +264,12 @@ function createProgressBar(percentage) {
 
   const bar = '█'.repeat(filled) + '░'.repeat(empty);
 
-  if (percentage >= 100) return chalk.green(bar);
-  if (percentage >= 50) return chalk.yellow(bar);
+  if (percentage >= 100) {
+    return chalk.green(bar);
+  }
+  if (percentage >= 50) {
+    return chalk.yellow(bar);
+  }
   return chalk.gray(bar);
 }
 

@@ -4,7 +4,7 @@
  * Supports cycle detection, topological sort, and parallel execution planning
  */
 
-import { OrchestrationError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, OrchestrationError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('TaskGraph');
@@ -67,7 +67,9 @@ class TaskNode {
    * Get duration in milliseconds
    */
   getDuration() {
-    if (!this.startTime || !this.endTime) return null;
+    if (!this.startTime || !this.endTime) {
+      return null;
+    }
     return this.endTime - this.startTime;
   }
 }
@@ -90,11 +92,7 @@ export class TaskGraph {
    */
   addTask(task) {
     if (!task.id) {
-      throw new OrchestrationError(
-        'Task must have an id',
-        ErrorCodes.TASK_NOT_FOUND,
-        { task }
-      );
+      throw new OrchestrationError('Task must have an id', ErrorCodes.TASK_NOT_FOUND, { task });
     }
 
     if (this.nodes.has(task.id)) {
@@ -125,11 +123,9 @@ export class TaskGraph {
     const dependencyNode = this.nodes.get(dependsOnTaskId);
 
     if (!taskNode) {
-      throw new OrchestrationError(
-        `Task not found: ${taskId}`,
-        ErrorCodes.TASK_NOT_FOUND,
-        { taskId }
-      );
+      throw new OrchestrationError(`Task not found: ${taskId}`, ErrorCodes.TASK_NOT_FOUND, {
+        taskId,
+      });
     }
 
     if (!dependencyNode) {
@@ -151,7 +147,9 @@ export class TaskGraph {
    */
   removeTask(taskId) {
     const node = this.nodes.get(taskId);
-    if (!node) return false;
+    if (!node) {
+      return false;
+    }
 
     // Remove this task from its dependencies' dependents
     for (const depId of node.dependencies) {
@@ -183,7 +181,7 @@ export class TaskGraph {
     const recursionStack = new Set();
     const cyclePath = [];
 
-    const dfs = (nodeId) => {
+    const dfs = nodeId => {
       visited.add(nodeId);
       recursionStack.add(nodeId);
       cyclePath.push(nodeId);
@@ -290,9 +288,11 @@ export class TaskGraph {
 
     for (const [nodeId, node] of this.nodes) {
       // Skip if already running or completed
-      if (node.status === TaskStatus.RUNNING ||
-          node.status === TaskStatus.COMPLETED ||
-          node.status === TaskStatus.FAILED) {
+      if (
+        node.status === TaskStatus.RUNNING ||
+        node.status === TaskStatus.COMPLETED ||
+        node.status === TaskStatus.FAILED
+      ) {
         continue;
       }
 
@@ -342,7 +342,7 @@ export class TaskGraph {
 
     for (const node of this.nodes.values()) {
       stats[node.status]++;
-      
+
       const duration = node.getDuration();
       if (duration !== null) {
         totalDuration += duration;
@@ -430,11 +430,9 @@ export function createTaskGraph(tasks) {
   // Validate
   const validation = graph.validate();
   if (!validation.valid) {
-    throw new OrchestrationError(
-      'Invalid task graph',
-      ErrorCodes.TASK_GRAPH_CYCLE,
-      { errors: validation.errors }
-    );
+    throw new OrchestrationError('Invalid task graph', ErrorCodes.TASK_GRAPH_CYCLE, {
+      errors: validation.errors,
+    });
   }
 
   return graph;

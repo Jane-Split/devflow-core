@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '../utils/logger.js';
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const logger = new Logger('TestReporter');
@@ -156,9 +156,7 @@ export class TestReporter {
       }
     }
 
-    summary.passRate = summary.total > 0
-      ? ((summary.passed / summary.total) * 100).toFixed(1)
-      : 0;
+    summary.passRate = summary.total > 0 ? ((summary.passed / summary.total) * 100).toFixed(1) : 0;
 
     return summary;
   }
@@ -177,14 +175,17 @@ export class TestReporter {
         file: suite.testFilePath || suite.file || '',
         duration: suite.duration || 0,
         status: this._determineSuiteStatus(suite),
-        tests: (suite.tests || suite.testResults || []).map(test => new TestCase({
-          name: test.name || test.fullName || test.title || 'Unknown Test',
-          status: test.status || (test.passed ? TestStatus.PASSED : TestStatus.FAILED),
-          duration: test.duration || 0,
-          error: test.error || test.failureMessage || null,
-          stackTrace: test.stackTrace || test.failureMessages?.join('\n') || null,
-          retries: test.retryCount || 0,
-        })),
+        tests: (suite.tests || suite.testResults || []).map(
+          test =>
+            new TestCase({
+              name: test.name || test.fullName || test.title || 'Unknown Test',
+              status: test.status || (test.passed ? TestStatus.PASSED : TestStatus.FAILED),
+              duration: test.duration || 0,
+              error: test.error || test.failureMessage || null,
+              stackTrace: test.stackTrace || test.failureMessages?.join('\n') || null,
+              retries: test.retryCount || 0,
+            })
+        ),
       });
 
       return testSuite;
@@ -197,9 +198,15 @@ export class TestReporter {
    * @returns {string} Status
    */
   _determineSuiteStatus(suite) {
-    if (suite.status) return suite.status;
-    if (suite.numFailingTests > 0) return TestStatus.FAILED;
-    if (suite.numPendingTests > 0) return TestStatus.PENDING;
+    if (suite.status) {
+      return suite.status;
+    }
+    if (suite.numFailingTests > 0) {
+      return TestStatus.FAILED;
+    }
+    if (suite.numPendingTests > 0) {
+      return TestStatus.PENDING;
+    }
     return TestStatus.PASSED;
   }
 
@@ -325,8 +332,12 @@ export class TestReporter {
       lines.push('');
 
       for (const suite of report.testSuites) {
-        const statusIcon = suite.status === TestStatus.PASSED ? '✅' :
-          suite.status === TestStatus.FAILED ? '❌' : '⏭️';
+        const statusIcon =
+          suite.status === TestStatus.PASSED
+            ? '✅'
+            : suite.status === TestStatus.FAILED
+              ? '❌'
+              : '⏭️';
         lines.push(`### ${statusIcon} ${suite.name}`);
         lines.push('');
         lines.push(`**File**: \`${suite.file}\``);
@@ -338,8 +349,12 @@ export class TestReporter {
           lines.push('|:---|:---|:---|');
 
           for (const test of suite.tests) {
-            const icon = test.status === TestStatus.PASSED ? '✅' :
-              test.status === TestStatus.FAILED ? '❌' : '⏭️';
+            const icon =
+              test.status === TestStatus.PASSED
+                ? '✅'
+                : test.status === TestStatus.FAILED
+                  ? '❌'
+                  : '⏭️';
             lines.push(`| ${test.name} | ${icon} | ${this._formatDuration(test.duration)} |`);
           }
           lines.push('');
@@ -436,27 +451,43 @@ export class TestReporter {
   </div>
 
   <h2>Test Suites</h2>
-  ${report.testSuites.map(suite => `
+  ${report.testSuites
+    .map(
+      suite => `
     <h3>${suite.status === TestStatus.PASSED ? '✅' : '❌'} ${suite.name}</h3>
     <table>
       <tr><th>Test</th><th>Status</th><th>Duration</th></tr>
-      ${suite.tests.map(test => `
+      ${suite.tests
+        .map(
+          test => `
         <tr>
           <td>${test.name}</td>
           <td class="${test.status}">${test.status}</td>
           <td>${this._formatDuration(test.duration)}</td>
         </tr>
-      `).join('')}
+      `
+        )
+        .join('')}
     </table>
-  `).join('')}
+  `
+    )
+    .join('')}
 
-  ${report.failures.length > 0 ? `
+  ${
+    report.failures.length > 0
+      ? `
     <h2>Failures</h2>
-    ${report.failures.map(f => `
+    ${report.failures
+      .map(
+        f => `
       <h3>❌ ${f.test}</h3>
       <div class="error">${f.error || 'No error message'}</div>
-    `).join('')}
-  ` : ''}
+    `
+      )
+      .join('')}
+  `
+      : ''
+  }
 </body>
 </html>`;
   }
@@ -473,10 +504,14 @@ export class TestReporter {
     ];
 
     for (const suite of report.testSuites) {
-      lines.push(`  <testsuite name="${this._escapeXml(suite.name)}" tests="${suite.tests.length}" failures="${suite.tests.filter(t => t.status === TestStatus.FAILED).length}" time="${suite.duration / 1000}">`);
+      lines.push(
+        `  <testsuite name="${this._escapeXml(suite.name)}" tests="${suite.tests.length}" failures="${suite.tests.filter(t => t.status === TestStatus.FAILED).length}" time="${suite.duration / 1000}">`
+      );
 
       for (const test of suite.tests) {
-        lines.push(`    <testcase name="${this._escapeXml(test.name)}" classname="${this._escapeXml(suite.name)}" time="${test.duration / 1000}">`);
+        lines.push(
+          `    <testcase name="${this._escapeXml(test.name)}" classname="${this._escapeXml(suite.name)}" time="${test.duration / 1000}">`
+        );
 
         if (test.status === TestStatus.FAILED) {
           lines.push(`      <failure message="${this._escapeXml(test.error || 'Test failed')}">`);
@@ -504,7 +539,9 @@ export class TestReporter {
    * @returns {string} Escaped string
    */
   _escapeXml(str) {
-    if (!str) return '';
+    if (!str) {
+      return '';
+    }
     return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -519,8 +556,12 @@ export class TestReporter {
    * @returns {string} Formatted duration
    */
   _formatDuration(ms) {
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+    if (ms < 1000) {
+      return `${ms}ms`;
+    }
+    if (ms < 60000) {
+      return `${(ms / 1000).toFixed(2)}s`;
+    }
     return `${(ms / 60000).toFixed(2)}m`;
   }
 }

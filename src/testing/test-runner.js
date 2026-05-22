@@ -4,9 +4,7 @@
  */
 
 import { spawn } from 'child_process';
-import { join } from 'path';
-import fs from 'fs-extra';
-import { TestingError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, TestingError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('TestRunner');
@@ -40,18 +38,11 @@ export class TestRunner {
    * @returns {Promise<Object>} Test results
    */
   async runUnitTests(options = {}) {
-    const {
-      pattern = '**/*.test.js',
-      coverage = false,
-      watch = false,
-      update = false,
-    } = options;
+    const { pattern = '**/*.test.js', coverage = false, watch = false, update = false } = options;
 
     logger.info('Running unit tests...');
 
-    const args = [
-      ...this._buildJestArgs({ pattern, coverage, watch, update }),
-    ];
+    const args = [...this._buildJestArgs({ pattern, coverage, watch, update })];
 
     return this._runCommand('jest', args);
   }
@@ -62,10 +53,7 @@ export class TestRunner {
    * @returns {Promise<Object>} Test results
    */
   async runIntegrationTests(options = {}) {
-    const {
-      pattern = 'integration/**/*.test.js',
-      coverage = false,
-    } = options;
+    const { pattern = 'integration/**/*.test.js', coverage = false } = options;
 
     logger.info('Running integration tests...');
 
@@ -91,7 +79,8 @@ export class TestRunner {
 
     const args = [
       pattern,
-      '--project', browser,
+      '--project',
+      browser,
       !headed && '--headed' !== headed ? '--headed' : '',
       `--timeout=${timeout}`,
     ].filter(Boolean);
@@ -201,15 +190,15 @@ export class TestRunner {
       let stdout = '';
       let stderr = '';
 
-      proc.stdout?.on('data', (data) => {
+      proc.stdout?.on('data', data => {
         stdout += data.toString();
       });
 
-      proc.stderr?.on('data', (data) => {
+      proc.stderr?.on('data', data => {
         stderr += data.toString();
       });
 
-      proc.on('close', (code) => {
+      proc.on('close', code => {
         try {
           const results = this._parseOutput(stdout, stderr, code);
           resolve(results);
@@ -218,11 +207,13 @@ export class TestRunner {
         }
       });
 
-      proc.on('error', (error) => {
-        reject(new TestingError(
-          `Failed to run tests: ${error.message}`,
-          ErrorCodes.TEST_EXECUTION_FAILED
-        ));
+      proc.on('error', error => {
+        reject(
+          new TestingError(
+            `Failed to run tests: ${error.message}`,
+            ErrorCodes.TEST_EXECUTION_FAILED
+          )
+        );
       });
     });
   }
@@ -256,13 +247,18 @@ export class TestRunner {
     }
 
     // Parse test counts
-    const testMatch = stdout.match(/Tests:\s+(?:(\d+)\s+passed?,\s+)?(\d+)\s+failed?(?:,\s+(\d+)\s+skipped?)?/);
+    const testMatch = stdout.match(
+      /Tests:\s+(?:(\d+)\s+passed?,\s+)?(\d+)\s+failed?(?:,\s+(\d+)\s+skipped?)?/
+    );
     if (testMatch) {
       results.tests = {
         passed: parseInt(testMatch[1]) || 0,
         failed: parseInt(testMatch[2]) || 0,
         skipped: parseInt(testMatch[3]) || 0,
-        total: (parseInt(testMatch[1]) || 0) + (parseInt(testMatch[2]) || 0) + (parseInt(testMatch[3]) || 0),
+        total:
+          (parseInt(testMatch[1]) || 0) +
+          (parseInt(testMatch[2]) || 0) +
+          (parseInt(testMatch[3]) || 0),
       };
     }
 
@@ -305,7 +301,9 @@ export class TestRunner {
     };
 
     for (const [key, result] of Object.entries(results)) {
-      if (key === 'summary' || key === 'timestamp') continue;
+      if (key === 'summary' || key === 'timestamp') {
+        continue;
+      }
 
       if (result?.tests) {
         summary.totalTests += result.tests.total;
@@ -323,9 +321,10 @@ export class TestRunner {
       }
     }
 
-    summary.passRate = summary.totalTests > 0
-      ? ((summary.passed / summary.totalTests) * 100).toFixed(2) + '%'
-      : 'N/A';
+    summary.passRate =
+      summary.totalTests > 0
+        ? `${((summary.passed / summary.totalTests) * 100).toFixed(2)}%`
+        : 'N/A';
 
     return summary;
   }
@@ -333,7 +332,7 @@ export class TestRunner {
   /**
    * Watch mode
    */
-  watch(onChange) {
+  watch(_onChange) {
     logger.info('Starting test watcher...');
 
     const proc = spawn('jest', ['--watch', '--verbose'], {
@@ -342,7 +341,7 @@ export class TestRunner {
       shell: process.platform === 'win32',
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', code => {
       if (code !== 0) {
         logger.error(`Test watcher exited with code ${code}`);
       }

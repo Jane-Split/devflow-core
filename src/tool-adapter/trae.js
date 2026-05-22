@@ -4,9 +4,6 @@
  */
 
 import { BaseToolAdapter, ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('TraeAdapter');
 
 /**
  * Trae Tool Adapter
@@ -83,11 +80,8 @@ export class TraeAdapter extends BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {string} Subagent command
    */
-  buildSubagentCommand(task, options = {}) {
-    const {
-      agentType = 'general_purpose_task',
-      description = task.title || task.name,
-    } = options;
+  buildSubagentCommand(task, _options = {}) {
+    const { agentType = 'general_purpose_task', description = task.title || task.name } = _options;
 
     // Trae subagent format (similar to Cursor)
     return `#subagent ${agentType} "${description}"`;
@@ -99,12 +93,7 @@ export class TraeAdapter extends BaseToolAdapter {
    * @returns {string} Parallel prompt
    */
   buildParallelPrompt(tasks) {
-    const lines = [
-      '# 并行任务执行',
-      '',
-      '请使用子代理并行执行以下任务:',
-      '',
-    ];
+    const lines = ['# 并行任务执行', '', '请使用子代理并行执行以下任务:', ''];
 
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];

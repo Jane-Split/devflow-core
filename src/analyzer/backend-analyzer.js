@@ -5,7 +5,6 @@
 
 import { join } from 'path';
 import fs from 'fs-extra';
-import { AnalysisError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('BackendAnalyzer');
@@ -20,27 +19,27 @@ const BACKEND_FRAMEWORKS = {
   fastify: { name: 'Fastify', language: 'javascript', indicators: ['fastify'] },
   koa: { name: 'Koa', language: 'javascript', indicators: ['koa'] },
   hapi: { name: 'Hapi', language: 'javascript', indicators: ['@hapi/hapi'] },
-  
+
   // Python
   django: { name: 'Django', language: 'python', indicators: ['django'] },
   flask: { name: 'Flask', language: 'python', indicators: ['flask'] },
   fastapi: { name: 'FastAPI', language: 'python', indicators: ['fastapi'] },
-  
+
   // Java
   spring: { name: 'Spring Boot', language: 'java', indicators: ['spring-boot'] },
-  
+
   // Go
   gin: { name: 'Gin', language: 'go', indicators: ['gin-gonic/gin'] },
   echo: { name: 'Echo', language: 'go', indicators: ['labstack/echo'] },
-  
+
   // Rust
   actix: { name: 'Actix-web', language: 'rust', indicators: ['actix-web'] },
   axum: { name: 'Axum', language: 'rust', indicators: ['axum'] },
-  
+
   // PHP
   laravel: { name: 'Laravel', language: 'php', indicators: ['laravel/framework'] },
   symfony: { name: 'Symfony', language: 'php', indicators: ['symfony/framework-bundle'] },
-  
+
   // Ruby
   rails: { name: 'Ruby on Rails', language: 'ruby', indicators: ['rails'] },
   sinatra: { name: 'Sinatra', language: 'ruby', indicators: ['sinatra'] },
@@ -55,19 +54,19 @@ const ORM_LIBRARIES = {
   typeorm: { name: 'TypeORM', language: 'typescript', indicators: ['typeorm'] },
   sequelize: { name: 'Sequelize', language: 'javascript', indicators: ['sequelize'] },
   mongoose: { name: 'Mongoose', language: 'javascript', indicators: ['mongoose'] },
-  
+
   // Python
   sqlalchemy: { name: 'SQLAlchemy', language: 'python', indicators: ['sqlalchemy'] },
   django_orm: { name: 'Django ORM', language: 'python', indicators: ['django'] },
-  
+
   // Java
   hibernate: { name: 'Hibernate', language: 'java', indicators: ['hibernate-core'] },
   jpa: { name: 'JPA', language: 'java', indicators: ['spring-boot-starter-data-jpa'] },
-  
+
   // Go
   gorm: { name: 'GORM', language: 'go', indicators: ['gorm.io/gorm'] },
   ent: { name: 'Ent', language: 'go', indicators: ['entgo.io/ent'] },
-  
+
   // Rust
   diesel: { name: 'Diesel', language: 'rust', indicators: ['diesel'] },
   sea_orm: { name: 'SeaORM', language: 'rust', indicators: ['sea-orm'] },
@@ -77,7 +76,10 @@ const ORM_LIBRARIES = {
  * Database drivers
  */
 const DATABASES = {
-  postgresql: { name: 'PostgreSQL', indicators: ['pg', 'postgres', 'postgresql', 'psycopg2', 'jdbc:postgresql'] },
+  postgresql: {
+    name: 'PostgreSQL',
+    indicators: ['pg', 'postgres', 'postgresql', 'psycopg2', 'jdbc:postgresql'],
+  },
   mysql: { name: 'MySQL', indicators: ['mysql', 'mysql2', 'mysql-connector', 'jdbc:mysql'] },
   mongodb: { name: 'MongoDB', indicators: ['mongodb', 'mongoose', 'mongo'] },
   sqlite: { name: 'SQLite', indicators: ['sqlite', 'sqlite3'] },
@@ -169,11 +171,21 @@ export class BackendAnalyzer {
    * Detect programming language
    */
   async _detectLanguage() {
-    if (this.packageJson) return 'javascript';
-    if (this.pomXml) return 'java';
-    if (this.goMod) return 'go';
-    if (this.requirements || this.pyproject) return 'python';
-    if (this.cargoToml) return 'rust';
+    if (this.packageJson) {
+      return 'javascript';
+    }
+    if (this.pomXml) {
+      return 'java';
+    }
+    if (this.goMod) {
+      return 'go';
+    }
+    if (this.requirements || this.pyproject) {
+      return 'python';
+    }
+    if (this.cargoToml) {
+      return 'rust';
+    }
     return 'unknown';
   }
 
@@ -248,7 +260,11 @@ export class BackendAnalyzer {
     const deps = this._getDependencies();
     const styles = [];
 
-    if (deps.includes('graphql') || deps.includes('apollo-server') || deps.includes('@nestjs/graphql')) {
+    if (
+      deps.includes('graphql') ||
+      deps.includes('apollo-server') ||
+      deps.includes('@nestjs/graphql')
+    ) {
       styles.push('graphql');
     }
 
@@ -256,7 +272,11 @@ export class BackendAnalyzer {
       styles.push('grpc');
     }
 
-    if (deps.includes('swagger-ui-express') || deps.includes('@nestjs/swagger') || deps.includes('springdoc')) {
+    if (
+      deps.includes('swagger-ui-express') ||
+      deps.includes('@nestjs/swagger') ||
+      deps.includes('springdoc')
+    ) {
       styles.push('openapi');
     }
 
@@ -278,20 +298,36 @@ export class BackendAnalyzer {
     };
 
     // JavaScript/TypeScript
-    if (deps.includes('jest')) testing.frameworks.push('Jest');
-    if (deps.includes('mocha')) testing.frameworks.push('Mocha');
-    if (deps.includes('supertest')) testing.frameworks.push('Supertest');
+    if (deps.includes('jest')) {
+      testing.frameworks.push('Jest');
+    }
+    if (deps.includes('mocha')) {
+      testing.frameworks.push('Mocha');
+    }
+    if (deps.includes('supertest')) {
+      testing.frameworks.push('Supertest');
+    }
 
     // Python
-    if (deps.includes('pytest')) testing.frameworks.push('pytest');
-    if (deps.includes('unittest')) testing.frameworks.push('unittest');
+    if (deps.includes('pytest')) {
+      testing.frameworks.push('pytest');
+    }
+    if (deps.includes('unittest')) {
+      testing.frameworks.push('unittest');
+    }
 
     // Java
-    if (deps.includes('junit')) testing.frameworks.push('JUnit');
-    if (deps.includes('spring-boot-starter-test')) testing.frameworks.push('Spring Test');
+    if (deps.includes('junit')) {
+      testing.frameworks.push('JUnit');
+    }
+    if (deps.includes('spring-boot-starter-test')) {
+      testing.frameworks.push('Spring Test');
+    }
 
     // Go
-    if (deps.includes('testify')) testing.frameworks.push('Testify');
+    if (deps.includes('testify')) {
+      testing.frameworks.push('Testify');
+    }
 
     return testing;
   }
@@ -307,11 +343,21 @@ export class BackendAnalyzer {
 
     // Check common backend folder structures
     const commonFolders = [
-      'controllers', 'routes', 'handlers',
-      'models', 'entities', 'schemas',
-      'services', 'repositories', 'dao',
-      'middleware', 'filters', 'interceptors',
-      'config', 'utils', 'helpers',
+      'controllers',
+      'routes',
+      'handlers',
+      'models',
+      'entities',
+      'schemas',
+      'services',
+      'repositories',
+      'dao',
+      'middleware',
+      'filters',
+      'interceptors',
+      'config',
+      'utils',
+      'helpers',
     ];
 
     for (const folder of commonFolders) {
@@ -354,7 +400,9 @@ export class BackendAnalyzer {
       const lines = this.requirements.split('\n');
       for (const line of lines) {
         const match = line.match(/^([a-zA-Z0-9_-]+)/);
-        if (match) deps.push(match[1]);
+        if (match) {
+          deps.push(match[1]);
+        }
       }
     }
 

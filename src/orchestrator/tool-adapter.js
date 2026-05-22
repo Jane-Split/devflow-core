@@ -4,18 +4,15 @@
  * Handles context limits, prompting strategies, and subagent invocation
  */
 
-import { ToolAdapterError, ErrorCodes } from '../utils/errors.js';
-import { Logger } from '../utils/logger.js';
-import { TOOL_CAPABILITIES, SupportedTools } from '../core/tool-detector.js';
-
-const logger = new Logger('ToolAdapter');
+import { ErrorCodes, ToolAdapterError } from '../utils/errors.js';
+import { SupportedTools, TOOL_CAPABILITIES } from '../core/tool-detector.js';
 
 /**
  * Prompt style types
  */
 export const PromptStyle = {
-  DETAILED: 'detailed',     // Full context, verbose instructions
-  CONCISE: 'concise',       // Minimal context, brief instructions
+  DETAILED: 'detailed', // Full context, verbose instructions
+  CONCISE: 'concise', // Minimal context, brief instructions
   PSEUDOCODE: 'pseudocode', // High-level pseudocode instructions
 };
 
@@ -38,7 +35,7 @@ export class BaseToolAdapter {
    * @param {Object} context - Additional context
    * @returns {string} Generated prompt
    */
-  buildPrompt(taskCard, context = {}) {
+  buildPrompt(_taskCard, _context = {}) {
     throw new ToolAdapterError(
       'buildPrompt() must be implemented by subclass',
       ErrorCodes.NOT_IMPLEMENTED
@@ -71,7 +68,7 @@ export class BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {Object} Command configuration
    */
-  buildSubagentCommand(taskCard, options = {}) {
+  buildSubagentCommand(_taskCard, _options = {}) {
     throw new ToolAdapterError(
       'buildSubagentCommand() must be implemented by subclass',
       ErrorCodes.NOT_IMPLEMENTED
@@ -89,12 +86,7 @@ export class CursorAdapter extends BaseToolAdapter {
   }
 
   buildPrompt(taskCard, context = {}) {
-    const {
-      projectProfile = {},
-      conventions = {},
-      designDoc = null,
-      previousTasks = [],
-    } = context;
+    const { projectProfile = {}, conventions = {}, designDoc = null, previousTasks = [] } = context;
 
     return `# Task: ${taskCard.title}
 
@@ -124,14 +116,14 @@ ${JSON.stringify(projectProfile, null, 2)}
 ${designDoc || 'No design document available'}
 
 ## Dependencies
-${taskCard.dependsOn?.length > 0 
-  ? taskCard.dependsOn.map(id => `- ${id}`).join('\n')
-  : 'None'}
+${taskCard.dependsOn?.length > 0 ? taskCard.dependsOn.map(id => `- ${id}`).join('\n') : 'None'}
 
 ## Previous Task Results
-${previousTasks.length > 0 
-  ? previousTasks.map(t => `### ${t.id}: ${t.title}\n${t.output || 'No output'}`).join('\n\n')
-  : 'None'}
+${
+  previousTasks.length > 0
+    ? previousTasks.map(t => `### ${t.id}: ${t.title}\n${t.output || 'No output'}`).join('\n\n')
+    : 'None'
+}
 
 ## Acceptance Criteria
 ${taskCard.acceptanceCriteria?.map(c => `- ${c}`).join('\n') || 'No specific criteria defined'}
@@ -154,10 +146,7 @@ Please complete this task and report the results including:
   buildSubagentCommand(taskCard, options = {}) {
     return {
       command: 'cursor-subagent',
-      args: [
-        '--task-id', taskCard.id,
-        '--prompt', this.buildPrompt(taskCard, options.context),
-      ],
+      args: ['--task-id', taskCard.id, '--prompt', this.buildPrompt(taskCard, options.context)],
       readOnly: this.capabilities.subagentReadOnly,
     };
   }
@@ -176,20 +165,17 @@ export class TraeAdapter extends BaseToolAdapter {
     // Similar to Cursor but slightly more concise
     const cursorAdapter = new CursorAdapter(this.config);
     let prompt = cursorAdapter.buildPrompt(taskCard, context);
-    
+
     // Trae prefers slightly more structured format
     prompt = prompt.replace('## Instructions', '## Implementation Steps');
-    
+
     return prompt;
   }
 
   buildSubagentCommand(taskCard, options = {}) {
     return {
       command: 'trae-subagent',
-      args: [
-        taskCard.id,
-        this.buildPrompt(taskCard, options.context),
-      ],
+      args: [taskCard.id, this.buildPrompt(taskCard, options.context)],
       readOnly: this.capabilities.subagentReadOnly,
     };
   }
@@ -204,11 +190,7 @@ export class WindsurfAdapter extends BaseToolAdapter {
   }
 
   buildPrompt(taskCard, context = {}) {
-    const {
-      projectProfile = {},
-      conventions = {},
-      designDoc = null,
-    } = context;
+    const { projectProfile = {}, conventions = {}, designDoc = null } = context;
 
     return `## ${taskCard.id}: ${taskCard.title}
 
@@ -258,10 +240,7 @@ export class ClineAdapter extends BaseToolAdapter {
   buildPrompt(taskCard, context = {}) {
     // Cline subagent needs very detailed, pseudocode-level instructions
     // because it cannot read existing code context
-    const {
-      projectProfile = {},
-      conventions = {},
-    } = context;
+    const { conventions = {} } = context;
 
     return `# TASK IMPLEMENTATION: ${taskCard.title}
 TASK_ID: ${taskCard.id}
@@ -362,7 +341,7 @@ export class CopilotAdapter extends BaseToolAdapter {
     super({ ...config, toolType: SupportedTools.COPILOT });
   }
 
-  buildPrompt(taskCard, context = {}) {
+  buildPrompt(taskCard, _context = {}) {
     // Very concise for Copilot's limited context
     return `Task: ${taskCard.title}
 ID: ${taskCard.id}

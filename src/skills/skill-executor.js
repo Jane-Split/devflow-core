@@ -1,6 +1,6 @@
 /**
  * Skill Executor - Skill 执行器
- * 
+ *
  * 执行解析后的 Skill 命令，调用对应的 CLI 功能
  * 支持同步和异步执行，提供执行上下文管理
  */
@@ -51,7 +51,7 @@ class SkillExecutor {
    */
   async createContext(projectRoot, options = {}) {
     const sessionId = this._generateSessionId();
-    
+
     // 初始化配置
     const config = new ConfigManager(projectRoot);
     await config.load();
@@ -59,7 +59,7 @@ class SkillExecutor {
     // 初始化内存管理器
     const memory = new MemoryManager({
       projectRoot,
-      embeddingLevel: config.get('memory.embeddingLevel', 1)
+      embeddingLevel: config.get('memory.embeddingLevel', 1),
     });
     await memory.initialize();
 
@@ -70,18 +70,18 @@ class SkillExecutor {
       config,
       variables: options.variables || {},
       history: [],
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.contexts.set(sessionId, context);
-    
+
     // 记录会话开始
     await memory.store('session', {
       id: sessionId,
       type: 'skill_execution',
       projectRoot,
       startedAt: context.createdAt,
-      status: 'active'
+      status: 'active',
     });
 
     return context;
@@ -103,7 +103,7 @@ class SkillExecutor {
         error: `未找到 Skill: ${skillId}`,
         exitCode: 1,
         duration: 0,
-        metadata: { skillId }
+        metadata: { skillId },
       };
     }
 
@@ -116,24 +116,24 @@ class SkillExecutor {
         error: `参数验证失败:\n${validation.errors.join('\n')}`,
         exitCode: 1,
         duration: 0,
-        metadata: { skillId, validation }
+        metadata: { skillId, validation },
       };
     }
 
     const startTime = Date.now();
-    
+
     try {
       // 记录执行开始
       context.history.push({
         skill: skillId,
         command: skill.command,
         args,
-        startedAt: new Date()
+        startedAt: new Date(),
       });
 
       // 根据 skill 类型选择执行方式
       let result;
-      
+
       if (skill.handler && skill.handler.startsWith('cli:')) {
         // CLI 命令执行
         result = await this._executeCLI(skill, args, context);
@@ -157,9 +157,9 @@ class SkillExecutor {
         result: {
           success: result.success,
           exitCode: result.exitCode,
-          duration: result.duration
+          duration: result.duration,
         },
-        completedAt: new Date()
+        completedAt: new Date(),
       });
 
       // 更新历史记录
@@ -168,17 +168,16 @@ class SkillExecutor {
       historyEntry.success = result.success;
 
       return result;
-
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       return {
         success: false,
         output: '',
         error: error.message,
         exitCode: 1,
         duration,
-        metadata: { skillId, error: error.stack }
+        metadata: { skillId, error: error.stack },
       };
     }
   }
@@ -192,35 +191,35 @@ class SkillExecutor {
    */
   async _executeCLI(skill, args, context) {
     const startTime = Date.now();
-    
+
     // 构建 CLI 命令
     const cliArgs = this._buildCLIArgs(skill, args);
-    
-    return new Promise((resolve) => {
+
+    return new Promise(resolve => {
       const child = spawn('node', [CLI_PATH, ...cliArgs], {
         cwd: context.projectRoot,
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
           DEVFLOW_SESSION_ID: context.sessionId,
-          DEVFLOW_SKILL_MODE: 'true'
-        }
+          DEVFLOW_SKILL_MODE: 'true',
+        },
       });
 
       let stdout = '';
       let stderr = '';
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', data => {
         stdout += data.toString();
       });
 
-      child.stderr.on('data', (data) => {
+      child.stderr.on('data', data => {
         stderr += data.toString();
       });
 
-      child.on('close', (exitCode) => {
+      child.on('close', exitCode => {
         const duration = Date.now() - startTime;
-        
+
         resolve({
           success: exitCode === 0,
           output: stdout,
@@ -230,21 +229,21 @@ class SkillExecutor {
           metadata: {
             skill: skill.id,
             command: skill.command,
-            cliArgs
-          }
+            cliArgs,
+          },
         });
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         const duration = Date.now() - startTime;
-        
+
         resolve({
           success: false,
           output: stdout,
           error: error.message,
           exitCode: 1,
           duration,
-          metadata: { skill: skill.id, error: error.stack }
+          metadata: { skill: skill.id, error: error.stack },
         });
       });
     });
@@ -257,17 +256,17 @@ class SkillExecutor {
    * @param {ExecutionContext} context
    * @returns {Promise<ExecutionResult>}
    */
-  async _executeAPI(skill, args, context) {
+  async _executeAPI(skill, _args, _context) {
     // API 执行模式，用于未来扩展
     const startTime = Date.now();
-    
+
     return {
       success: true,
       output: 'API 执行模式暂未实现',
       error: '',
       exitCode: 0,
       duration: Date.now() - startTime,
-      metadata: { skill: skill.id, mode: 'api' }
+      metadata: { skill: skill.id, mode: 'api' },
     };
   }
 
@@ -280,7 +279,7 @@ class SkillExecutor {
    */
   async _executeInternal(skill, args, context) {
     const startTime = Date.now();
-    
+
     try {
       // 动态导入处理模块
       const handlerPath = skill.handler.replace('internal:', '');
@@ -300,19 +299,18 @@ class SkillExecutor {
         error: '',
         exitCode: 0,
         duration,
-        metadata: { skill: skill.id, mode: 'internal' }
+        metadata: { skill: skill.id, mode: 'internal' },
       };
-
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       return {
         success: false,
         output: '',
         error: error.message,
         exitCode: 1,
         duration,
-        metadata: { skill: skill.id, error: error.stack }
+        metadata: { skill: skill.id, error: error.stack },
       };
     }
   }
@@ -331,7 +329,7 @@ class SkillExecutor {
       '/devflow-init': 'init',
       '/devflow-analyze': 'analyze',
       '/devflow-run': 'run',
-      '/devflow-test': 'test'
+      '/devflow-test': 'test',
     };
 
     const cliCommand = commandMap[skill.command];
@@ -372,7 +370,7 @@ class SkillExecutor {
         error: `无法识别的命令: ${input}\n\n可用的命令:\n${this._getAvailableCommands()}`,
         exitCode: 1,
         duration: 0,
-        metadata: { input }
+        metadata: { input },
       };
     }
 
@@ -421,7 +419,7 @@ class SkillExecutor {
         id: sessionId,
         status: 'completed',
         completedAt: new Date(),
-        history: context.history
+        history: context.history,
       });
 
       this.contexts.delete(sessionId);
@@ -435,7 +433,9 @@ class SkillExecutor {
    */
   getStats(sessionId) {
     const context = this.contexts.get(sessionId);
-    if (!context) return null;
+    if (!context) {
+      return null;
+    }
 
     const executions = context.history;
     const successful = executions.filter(e => e.success).length;
@@ -454,7 +454,7 @@ class SkillExecutor {
       failed,
       totalDuration,
       createdAt: context.createdAt,
-      uptime: Date.now() - context.createdAt.getTime()
+      uptime: Date.now() - context.createdAt.getTime(),
     };
   }
 }

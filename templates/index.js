@@ -120,7 +120,7 @@ export function createDesignDoc(designInfo) {
  * @param {Object} taskInfo - Task information
  * @returns {string} Task card content
  */
-export function createTaskCard(taskInfo) {
+export function createTaskCardContent(taskInfo) {
   return fillTemplate(templates.taskCard, {
     TASK_ID: taskInfo.id || `task-${Date.now()}`,
     TITLE: taskInfo.title || 'Untitled Task',
@@ -143,5 +143,5 @@ export default {
   createAgentsMd,
   createConfig,
   createDesignDoc,
-  createTaskCard,
+  createTaskCardContent,
 };

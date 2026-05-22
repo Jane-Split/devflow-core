@@ -3,7 +3,7 @@
  * In-memory vector storage with cosine similarity search
  */
 
-import { MemoryError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, MemoryError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 import { createEmbeddingProvider } from './embedding.js';
 
@@ -23,7 +23,7 @@ export class VectorIndex {
     this.embeddingConfig = options.embeddingConfig || {};
     this.similarityThreshold = options.similarityThreshold || 0.7;
     this.maxResults = options.maxResults || 10;
-    
+
     this.embeddingProvider = null;
     this.vectors = new Map(); // id -> { vector, metadata }
     this.initialized = false;
@@ -33,7 +33,9 @@ export class VectorIndex {
    * Initialize the index
    */
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      return;
+    }
 
     logger.debug('Initializing vector index...');
 
@@ -55,7 +57,7 @@ export class VectorIndex {
 
     try {
       const vector = await this.embeddingProvider.embed(text);
-      
+
       this.vectors.set(id, {
         vector,
         text,
@@ -88,7 +90,7 @@ export class VectorIndex {
 
     for (let i = 0; i < documents.length; i++) {
       const { id, text, metadata = {} } = documents[i];
-      
+
       this.vectors.set(id, {
         vector: embeddings[i],
         text,
@@ -110,11 +112,11 @@ export class VectorIndex {
   remove(id) {
     const existed = this.vectors.has(id);
     this.vectors.delete(id);
-    
+
     if (existed) {
       logger.debug(`Removed document from index: ${id}`);
     }
-    
+
     return existed;
   }
 
@@ -127,11 +129,7 @@ export class VectorIndex {
   async search(query, options = {}) {
     await this.initialize();
 
-    const {
-      threshold = this.similarityThreshold,
-      limit = this.maxResults,
-      filter,
-    } = options;
+    const { threshold = this.similarityThreshold, limit = this.maxResults, filter } = options;
 
     try {
       const queryVector = await this.embeddingProvider.embed(query);
@@ -159,10 +157,7 @@ export class VectorIndex {
       results.sort((a, b) => b.score - a.score);
       return results.slice(0, limit);
     } catch (error) {
-      throw new MemoryError(
-        `Search failed: ${error.message}`,
-        ErrorCodes.VECTOR_INDEX_ERROR
-      );
+      throw new MemoryError(`Search failed: ${error.message}`, ErrorCodes.VECTOR_INDEX_ERROR);
     }
   }
 
@@ -209,7 +204,9 @@ export class VectorIndex {
    */
   get(id) {
     const entry = this.vectors.get(id);
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
 
     return {
       id,
@@ -310,11 +307,13 @@ export class PersistentVectorIndex extends VectorIndex {
    * Load index from disk
    */
   async load() {
-    if (!this.storagePath) return;
+    if (!this.storagePath) {
+      return;
+    }
 
     try {
       const fs = await import('fs-extra');
-      
+
       if (await fs.pathExists(this.storagePath)) {
         const data = await fs.readJson(this.storagePath);
         await this.import(data);
@@ -329,7 +328,9 @@ export class PersistentVectorIndex extends VectorIndex {
    * Save index to disk
    */
   async save() {
-    if (!this.storagePath) return;
+    if (!this.storagePath) {
+      return;
+    }
 
     try {
       const fs = await import('fs-extra');

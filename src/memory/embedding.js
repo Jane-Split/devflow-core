@@ -4,7 +4,7 @@
  * Automatic fallback from top to bottom
  */
 
-import { MemoryError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, MemoryError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('EmbeddingProvider');
@@ -41,11 +41,8 @@ export class BaseEmbeddingProvider {
    * @param {string} text - Input text
    * @returns {Promise<number[]>} Embedding vector
    */
-  async embed(text) {
-    throw new MemoryError(
-      'embed() must be implemented by subclass',
-      ErrorCodes.NOT_IMPLEMENTED
-    );
+  async embed(_text) {
+    throw new MemoryError('embed() must be implemented by subclass', ErrorCodes.NOT_IMPLEMENTED);
   }
 
   /**
@@ -105,7 +102,7 @@ export class KeywordEmbeddingProvider extends BaseEmbeddingProvider {
     let hash = 0;
     for (let i = 0; i < token.length; i++) {
       const char = token.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash) % this.dimension;
@@ -165,7 +162,7 @@ export class LocalEmbeddingProvider extends BaseEmbeddingProvider {
       // Dynamic import to avoid hard dependency
       const { pipeline } = await import('@xenova/transformers');
       this.pipeline = pipeline;
-      
+
       // Use lightweight model
       this.model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
       logger.debug('Local embedding model loaded');
@@ -232,10 +229,7 @@ export class OpenAIEmbeddingProvider extends BaseEmbeddingProvider {
    */
   async initialize() {
     if (!this.apiKey) {
-      throw new MemoryError(
-        'OpenAI API key not provided',
-        ErrorCodes.EMBEDDING_ERROR
-      );
+      throw new MemoryError('OpenAI API key not provided', ErrorCodes.EMBEDDING_ERROR);
     }
 
     try {
@@ -266,10 +260,7 @@ export class OpenAIEmbeddingProvider extends BaseEmbeddingProvider {
 
       return response.data[0].embedding;
     } catch (error) {
-      throw new MemoryError(
-        `OpenAI API error: ${error.message}`,
-        ErrorCodes.EMBEDDING_ERROR
-      );
+      throw new MemoryError(`OpenAI API error: ${error.message}`, ErrorCodes.EMBEDDING_ERROR);
     }
   }
 
@@ -289,10 +280,7 @@ export class OpenAIEmbeddingProvider extends BaseEmbeddingProvider {
 
       return response.data.map(d => d.embedding);
     } catch (error) {
-      throw new MemoryError(
-        `OpenAI API error: ${error.message}`,
-        ErrorCodes.EMBEDDING_ERROR
-      );
+      throw new MemoryError(`OpenAI API error: ${error.message}`, ErrorCodes.EMBEDDING_ERROR);
     }
   }
 
@@ -336,7 +324,7 @@ export class SmartEmbeddingProvider extends BaseEmbeddingProvider {
     for (const ProviderClass of providerChain) {
       try {
         const provider = new ProviderClass(this.config);
-        
+
         if (!provider.isAvailable()) {
           logger.debug(`${ProviderClass.name} not available, skipping`);
           continue;
@@ -351,10 +339,7 @@ export class SmartEmbeddingProvider extends BaseEmbeddingProvider {
       }
     }
 
-    throw new MemoryError(
-      'No embedding provider available',
-      ErrorCodes.EMBEDDING_ERROR
-    );
+    throw new MemoryError('No embedding provider available', ErrorCodes.EMBEDDING_ERROR);
   }
 
   /**
@@ -369,17 +354,9 @@ export class SmartEmbeddingProvider extends BaseEmbeddingProvider {
 
     switch (this.preferred) {
       case EmbeddingModelType.OPENAI:
-        return [
-          OpenAIEmbeddingProvider,
-          LocalEmbeddingProvider,
-          KeywordEmbeddingProvider,
-        ];
+        return [OpenAIEmbeddingProvider, LocalEmbeddingProvider, KeywordEmbeddingProvider];
       case EmbeddingModelType.LOCAL:
-        return [
-          LocalEmbeddingProvider,
-          OpenAIEmbeddingProvider,
-          KeywordEmbeddingProvider,
-        ];
+        return [LocalEmbeddingProvider, OpenAIEmbeddingProvider, KeywordEmbeddingProvider];
       case EmbeddingModelType.KEYWORD:
         return [KeywordEmbeddingProvider];
       default: // AUTO

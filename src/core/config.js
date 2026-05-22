@@ -241,7 +241,10 @@ export class ConfigManager {
     }
 
     if (process.env.DEVFLOW_CONTEXT_LIMIT) {
-      overrides.aiTool = { ...overrides.aiTool, contextLimit: parseInt(process.env.DEVFLOW_CONTEXT_LIMIT, 10) };
+      overrides.aiTool = {
+        ...overrides.aiTool,
+        contextLimit: parseInt(process.env.DEVFLOW_CONTEXT_LIMIT, 10),
+      };
     }
 
     if (process.env.OPENAI_API_KEY) {
@@ -249,7 +252,10 @@ export class ConfigManager {
     }
 
     if (process.env.DEVFLOW_EMBEDDING_MODEL) {
-      overrides.memory = { ...overrides.memory, embeddingModel: process.env.DEVFLOW_EMBEDDING_MODEL };
+      overrides.memory = {
+        ...overrides.memory,
+        embeddingModel: process.env.DEVFLOW_EMBEDDING_MODEL,
+      };
     }
 
     if (process.env.DEVFLOW_PARALLEL_TASKS) {

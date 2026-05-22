@@ -5,55 +5,89 @@
 
 // Core modules
 export { ConfigManager, getConfigManager, DEFAULT_CONFIG } from './core/config.js';
-export { ToolDetector, detectTool, SupportedTools, TOOL_CAPABILITIES } from './core/tool-detector.js';
-export { ContextManager, createContextManager, ContextLayer, CONTEXT_BUDGET } from './core/context-manager.js';
-export { ComplexityEvaluator, createComplexityEvaluator, ComplexityLevel } from './core/complexity-evaluator.js';
+export {
+  ToolDetector,
+  detectTool,
+  SupportedTools,
+  TOOL_CAPABILITIES,
+} from './core/tool-detector.js';
+export {
+  ContextManager,
+  createContextManager,
+  ContextLayer,
+  CONTEXT_BUDGET,
+} from './core/context-manager.js';
+export {
+  ComplexityEvaluator,
+  createComplexityEvaluator,
+  ComplexityLevel,
+} from './core/complexity-evaluator.js';
 export { ParallelRunner, createParallelRunner, ExecutionStatus } from './core/parallel-runner.js';
-export { DesignVersionTracker, createDesignVersionTracker, DesignVersion, VersionChangeType } from './core/design-version-tracker.js';
-export { DesignConsistencyChecker, createDesignConsistencyChecker, ConsistencyResultType, FingerprintType, ImplementationFingerprint } from './core/design-consistency-checker.js';
+export {
+  DesignVersionTracker,
+  createDesignVersionTracker,
+  DesignVersion,
+  VersionChangeType,
+} from './core/design-version-tracker.js';
+export {
+  DesignConsistencyChecker,
+  createDesignConsistencyChecker,
+  ConsistencyResultType,
+  FingerprintType,
+  ImplementationFingerprint,
+} from './core/design-consistency-checker.js';
 
 // Memory modules
-export { MemoryProtocol, MemoryCategories, MemoryEntry, MemorySearchResult } from './memory/protocol.js';
+export {
+  MemoryProtocol,
+  MemoryCategories,
+  MemoryEntry,
+  MemorySearchResult,
+} from './memory/protocol.js';
 export { FileMemoryProvider } from './memory/file-provider.js';
-export { 
-  BaseEmbeddingProvider, 
-  KeywordEmbeddingProvider, 
-  LocalEmbeddingProvider, 
+export {
+  BaseEmbeddingProvider,
+  KeywordEmbeddingProvider,
+  LocalEmbeddingProvider,
   OpenAIEmbeddingProvider,
   SmartEmbeddingProvider,
   createEmbeddingProvider,
-  EmbeddingModelType 
+  EmbeddingModelType,
 } from './memory/embedding.js';
 export { VectorIndex, PersistentVectorIndex } from './memory/vector-index.js';
 export { MemoryManager, getMemoryManager } from './memory/manager.js';
 
 // Analyzer modules
-export { ProjectTypeDetector, detectProjectType, ProjectType } from './analyzer/project-detector.js';
+export {
+  ProjectTypeDetector,
+  detectProjectType,
+  ProjectType,
+} from './analyzer/project-detector.js';
 export { FrontendAnalyzer, analyzeFrontend } from './analyzer/frontend-analyzer.js';
 export { BackendAnalyzer, analyzeBackend } from './analyzer/backend-analyzer.js';
 export { ConventionExtractor, extractConventions } from './analyzer/convention-extractor.js';
 
 // Orchestrator modules
 export { TaskGraph, createTaskGraph, TaskStatus } from './orchestrator/task-graph.js';
-export { 
-  createTaskCard, 
-  validateTaskCard, 
-  taskCardToMarkdown, 
+export {
+  createTaskCard,
+  validateTaskCard,
+  taskCardToMarkdown,
   parseTaskCardsFromMarkdown,
-  TaskPriority, 
-  TaskType 
+  TaskPriority,
+  TaskType,
 } from './orchestrator/task-card.js';
-export { 
-  BaseToolAdapter, 
-  CursorAdapter, 
-  TraeAdapter, 
-  WindsurfAdapter, 
-  ClineAdapter, 
-  RooAdapter, 
+export {
+  BaseToolAdapter,
+  CursorAdapter,
+  TraeAdapter,
+  WindsurfAdapter,
+  ClineAdapter,
+  RooAdapter,
   CopilotAdapter,
   createToolAdapter,
   getAdapterForTool,
-  PromptStyle 
+  PromptStyle,
 } from './orchestrator/tool-adapter.js';
 // Tool adapters (new modular structure)
 export {
@@ -62,44 +96,29 @@ export {
   getAdapterNames,
   ToolCapability,
 } from './tool-adapter/index.js';
-export { 
-  TokenBudgetManager, 
-  checkBudget, 
-  CompressionStrategy, 
-  CompressionResult 
+export {
+  TokenBudgetManager,
+  checkBudget,
+  CompressionStrategy,
+  CompressionResult,
 } from './orchestrator/token-budget.js';
-export { 
-  Orchestrator, 
-  createOrchestrator,
-  WorkflowPhase 
-} from './orchestrator/orchestrator.js';
-export { 
-  LearningEngine, 
+export { Orchestrator, createOrchestrator, WorkflowPhase } from './orchestrator/orchestrator.js';
+export {
+  LearningEngine,
   createLearningEngine,
-  PatternCategory 
+  PatternCategory,
 } from './orchestrator/learning-engine.js';
-export { 
-  WorkflowRunner, 
-  createWorkflowRunner 
-} from './orchestrator/workflow-runner.js';
+export { WorkflowRunner, createWorkflowRunner } from './orchestrator/workflow-runner.js';
 
 // Testing modules
-export { 
-  TestGenerator, 
+export {
+  TestGenerator,
   createTestGenerator,
-  TestType, 
-  TestFramework 
+  TestType,
+  TestFramework,
 } from './testing/test-generator.js';
-export { 
-  TestRunner, 
-  createTestRunner,
-  TestStatus 
-} from './testing/test-runner.js';
-export { 
-  BrowserRunner, 
-  createBrowserRunner,
-  BrowserType 
-} from './testing/browser-runner.js';
+export { TestRunner, createTestRunner, TestStatus } from './testing/test-runner.js';
+export { BrowserRunner, createBrowserRunner, BrowserType } from './testing/browser-runner.js';
 export {
   TestReporter,
   createTestReporter,
@@ -118,21 +137,21 @@ export {
   createAgentsMd,
   createConfig,
   createDesignDoc,
-  createTaskCard,
+  createTaskCardContent,
 } from './templates/index.js';
 
 // Utils
-export { 
-  DevFlowError, 
-  ConfigError, 
-  MemoryError, 
-  AnalysisError, 
-  OrchestrationError, 
+export {
+  DevFlowError,
+  ConfigError,
+  MemoryError,
+  AnalysisError,
+  OrchestrationError,
   TestingError,
   ToolAdapterError,
   ErrorCodes,
   handleCliError,
-  withErrorHandling 
+  withErrorHandling,
 } from './utils/errors.js';
 export { Logger, LogLevel, createLogger, logger } from './utils/logger.js';
 

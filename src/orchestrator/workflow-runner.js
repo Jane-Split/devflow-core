@@ -124,7 +124,6 @@ export class WorkflowRunner {
           console.log(chalk.red(`Error: ${result.error}`));
           break;
         }
-
       } catch (error) {
         phaseSpinner.fail(chalk.red(`${phase} failed`));
         this.phaseResults[phase] = {
@@ -210,7 +209,7 @@ export class WorkflowRunner {
   /**
    * Phase: Analyze
    */
-  async _executeAnalyze(context) {
+  async _executeAnalyze(_context) {
     logger.info('Phase: Analyze - Analyzing project structure');
 
     const profile = await this.memoryManager.getProjectProfile();
@@ -229,11 +228,11 @@ export class WorkflowRunner {
   /**
    * Phase: Design
    */
-  async _executeDesign(context) {
+  async _executeDesign(_context) {
     logger.info('Phase: Design - Creating design documents');
 
     // Get design from requirements or generate
-    const design = context.requirements?.design || {
+    const design = _context.requirements?.design || {
       architecture: 'modular',
       components: [],
     };
@@ -272,7 +271,7 @@ export class WorkflowRunner {
   /**
    * Phase: Dev
    */
-  async _executeDev(context) {
+  async _executeDev(_context) {
     logger.info('Phase: Development - Executing tasks');
 
     const tasks = await this._loadPendingTasks();
@@ -298,7 +297,7 @@ export class WorkflowRunner {
   /**
    * Phase: Test
    */
-  async _executeTest(context) {
+  async _executeTest(_context) {
     logger.info('Phase: Test - Running tests');
 
     const { TestRunner } = await import('../testing/test-runner.js');
@@ -319,12 +318,12 @@ export class WorkflowRunner {
   /**
    * Phase: Fix
    */
-  async _executeFix(context) {
+  async _executeFix(_context) {
     logger.info('Phase: Fix - Addressing test failures');
 
     // Get failed tests from previous phase
     const testResults = this.phaseResults[WorkflowPhase.TEST];
-    
+
     if (!testResults?.output?.summary?.failed) {
       return {
         status: 'completed',
@@ -351,7 +350,7 @@ export class WorkflowRunner {
   /**
    * Phase: Regression
    */
-  async _executeRegression(context) {
+  async _executeRegression(_context) {
     logger.info('Phase: Regression - Final validation');
 
     // Re-run tests
@@ -375,13 +374,13 @@ export class WorkflowRunner {
    */
   async _loadRequirement(path) {
     const fs = await import('fs-extra');
-    
+
     try {
       const content = await fs.readFile(path, 'utf8');
       return JSON.parse(content);
     } catch {
       // Try as markdown
-      return { raw: content, path };
+      return { raw: 'content', path };
     }
   }
 
@@ -390,7 +389,7 @@ export class WorkflowRunner {
    */
   async _runResearch() {
     const { executeResearch } = await import('../cli/commands/analyze.js');
-    
+
     return executeResearch({
       projectRoot: this.projectRoot,
       refresh: true,
@@ -400,7 +399,7 @@ export class WorkflowRunner {
   /**
    * Create task cards from design
    */
-  _createTaskCards(design, requirements) {
+  _createTaskCards(design, _requirements) {
     const tasks = [];
     let taskId = 1;
 
@@ -481,7 +480,7 @@ export class WorkflowRunner {
   _displayWorkflowPlan(phases, requirements) {
     console.log(chalk.blue('\n📋 Workflow Plan\n'));
     console.log(chalk.gray('Phases:'));
-    
+
     phases.forEach((phase, index) => {
       const icons = {
         [WorkflowPhase.RESEARCH]: '🔍',
@@ -497,7 +496,10 @@ export class WorkflowRunner {
     });
 
     if (requirements) {
-      console.log(chalk.gray('\nRequirement:'), chalk.white(requirements.title || 'Custom requirement'));
+      console.log(
+        chalk.gray('\nRequirement:'),
+        chalk.white(requirements.title || 'Custom requirement')
+      );
     }
 
     console.log();
@@ -526,13 +528,9 @@ export class WorkflowRunner {
     const duration = this.endTime - this.startTime;
     const phases = Object.keys(this.phaseResults);
 
-    const completed = phases.filter(p => 
-      this.phaseResults[p]?.status === 'completed'
-    ).length;
+    const completed = phases.filter(p => this.phaseResults[p]?.status === 'completed').length;
 
-    const failed = phases.filter(p => 
-      this.phaseResults[p]?.status === 'failed'
-    ).length;
+    const failed = phases.filter(p => this.phaseResults[p]?.status === 'failed').length;
 
     return {
       phases: this.phaseResults,
@@ -569,21 +567,27 @@ export class WorkflowRunner {
    */
   _displaySummary(summary) {
     console.log(chalk.blue('\n📊 Workflow Summary\n'));
-    
-    console.log(chalk.gray('Status:'), 
-      summary.success ? chalk.green('✓ SUCCESS') : chalk.red('✗ FAILED'));
-    
+
+    console.log(
+      chalk.gray('Status:'),
+      summary.success ? chalk.green('✓ SUCCESS') : chalk.red('✗ FAILED')
+    );
+
     console.log(chalk.gray('Duration:'), chalk.white(summary.stats.durationFormatted));
-    console.log(chalk.gray('Phases:'), chalk.white(`${summary.stats.completed}/${summary.stats.totalPhases} completed`));
+    console.log(
+      chalk.gray('Phases:'),
+      chalk.white(`${summary.stats.completed}/${summary.stats.totalPhases} completed`)
+    );
 
     console.log(chalk.gray('\nPhase Results:'));
     for (const [phase, result] of Object.entries(summary.phases)) {
-      const status = result?.status === 'completed' 
-        ? chalk.green('✓')
-        : result?.status === 'failed'
-          ? chalk.red('✗')
-          : chalk.yellow('○');
-      
+      const status =
+        result?.status === 'completed'
+          ? chalk.green('✓')
+          : result?.status === 'failed'
+            ? chalk.red('✗')
+            : chalk.yellow('○');
+
       console.log(`  ${status} ${phase}`);
     }
 

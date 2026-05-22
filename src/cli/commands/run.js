@@ -52,7 +52,6 @@ export async function executeRun(options = {}) {
       console.log(chalk.red('\n✗ Workflow completed with errors'));
       process.exit(1);
     }
-
   } catch (error) {
     handleCliError(error, process.env.DEVFLOW_DEBUG === 'true');
   }
@@ -105,7 +104,7 @@ export async function executeTest(options = {}) {
         console.log(chalk.blue('\n📈 Coverage:'));
         for (const [type, data] of Object.entries(results.coverage)) {
           const color = data.covered ? chalk.green : chalk.red;
-          console.log(`  ${type}: ${color(data.percent + '%')}`);
+          console.log(`  ${type}: ${color(`${data.percent}%`)}`);
         }
       }
     }
@@ -118,7 +117,6 @@ export async function executeTest(options = {}) {
       console.log(chalk.red('\n✗ Some tests failed'));
       process.exit(1);
     }
-
   } catch (error) {
     handleCliError(error, process.env.DEVFLOW_DEBUG === 'true');
   }
@@ -166,7 +164,10 @@ export async function executeMemory(action, options = {}) {
         });
         console.log(chalk.blue(`\nFound ${results.length} results:\n`));
         for (const result of results) {
-          console.log(chalk.gray(`[${result.score.toFixed(2)}]`), result.entry?.metadata?.id || 'Unknown');
+          console.log(
+            chalk.gray(`[${result.score.toFixed(2)}]`),
+            result.entry?.metadata?.id || 'Unknown'
+          );
         }
         break;
       }
@@ -195,7 +196,6 @@ export async function executeMemory(action, options = {}) {
         console.log(chalk.red(`Unknown action: ${action}`));
         console.log(chalk.gray('Available actions: read, write, search, export, stats'));
     }
-
   } catch (error) {
     handleCliError(error, process.env.DEVFLOW_DEBUG === 'true');
   }

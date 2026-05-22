@@ -3,12 +3,12 @@
  * Main orchestration engine for task execution
  */
 
-import { TaskGraph, createTaskGraph } from './task-graph.js';
+import { createTaskGraph } from './task-graph.js';
 import { getAdapter } from '../tool-adapter/index.js';
 import { TokenBudgetManager } from './token-budget.js';
 import { ToolDetector } from '../core/tool-detector.js';
 import { MemoryManager } from '../memory/manager.js';
-import { OrchestrationError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, OrchestrationError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('Orchestrator');
@@ -111,16 +111,13 @@ export class Orchestrator {
           result = await this._executeRegressionPhase(data);
           break;
         default:
-          throw new OrchestrationError(
-            `Unknown phase: ${phase}`,
-            ErrorCodes.UNKNOWN_ERROR,
-            { phase }
-          );
+          throw new OrchestrationError(`Unknown phase: ${phase}`, ErrorCodes.UNKNOWN_ERROR, {
+            phase,
+          });
       }
 
       logger.info(`Phase ${phase} completed`);
       return result;
-
     } catch (error) {
       logger.error(`Phase ${phase} failed:`, error);
       throw error;
@@ -146,11 +143,9 @@ export class Orchestrator {
     // Validate
     const validation = this.taskGraph.validate();
     if (!validation.valid) {
-      throw new OrchestrationError(
-        'Invalid task graph',
-        ErrorCodes.TASK_GRAPH_CYCLE,
-        { errors: validation.errors }
-      );
+      throw new OrchestrationError('Invalid task graph', ErrorCodes.TASK_GRAPH_CYCLE, {
+        errors: validation.errors,
+      });
     }
 
     // Topological sort
@@ -178,7 +173,7 @@ export class Orchestrator {
 
       // Execute ready tasks in parallel
       const batchResults = await Promise.allSettled(
-        readyTasks.map(async (taskId) => {
+        readyTasks.map(async taskId => {
           const node = this.taskGraph.getTask(taskId);
           node.status = 'running';
           node.startTime = Date.now();
@@ -189,7 +184,7 @@ export class Orchestrator {
 
           try {
             const result = await this._executeTask(node.task);
-            
+
             node.status = 'completed';
             node.endTime = Date.now();
             node.result = result;
@@ -200,7 +195,6 @@ export class Orchestrator {
             }
 
             return { taskId, success: true, result };
-
           } catch (error) {
             node.status = 'failed';
             node.endTime = Date.now();
@@ -242,7 +236,7 @@ export class Orchestrator {
 
     if (!this.tokenBudgetManager.fitsInBudget(prompt)) {
       logger.warn(`Task ${task.id} exceeds context limit, running compression`);
-      
+
       const compressionResult = await this.tokenBudgetManager.runCompressionPipeline(
         context,
         task,
@@ -311,7 +305,7 @@ export class Orchestrator {
    */
   _getPreviousTaskResults(task) {
     const results = [];
-    
+
     for (const depId of task.dependsOn || []) {
       const result = this.executionResults.get(depId);
       if (result) {
@@ -323,7 +317,7 @@ export class Orchestrator {
   }
 
   // Phase execution methods - delegate to WorkflowRunner for full implementation
-  async _executeResearchPhase(data) {
+  async _executeResearchPhase(_data) {
     const { executeResearch } = await import('../cli/commands/analyze.js');
     try {
       await executeResearch({ projectRoot: this.projectRoot });
@@ -333,11 +327,15 @@ export class Orchestrator {
     }
   }
 
-  async _executeAnalyzePhase(data) {
+  async _executeAnalyzePhase(_data) {
     try {
       const profile = await this.memoryManager.getProjectProfile();
       if (!profile) {
-        return { phase: WorkflowPhase.ANALYZE, status: 'failed', error: 'No project profile found' };
+        return {
+          phase: WorkflowPhase.ANALYZE,
+          status: 'failed',
+          error: 'No project profile found',
+        };
       }
       return { phase: WorkflowPhase.ANALYZE, status: 'completed', result: profile.content };
     } catch (error) {
@@ -345,12 +343,12 @@ export class Orchestrator {
     }
   }
 
-  async _executeDesignPhase(data) {
+  async _executeDesignPhase(_data) {
     try {
       // Store design document
-      if (data?.designDoc) {
+      if (_data?.designDoc) {
         const designId = `design-${Date.now()}`;
-        await this.memoryManager.storeDesign(designId, data.designDoc);
+        await this.memoryManager.storeDesign(designId, _data.designDoc);
         return { phase: WorkflowPhase.DESIGN, status: 'completed', designId };
       }
       return { phase: WorkflowPhase.DESIGN, status: 'completed', result: 'Design phase completed' };
@@ -359,10 +357,10 @@ export class Orchestrator {
     }
   }
 
-  async _executeSplitPhase(data) {
+  async _executeSplitPhase(_data) {
     try {
       // Create task cards from design
-      const tasks = data?.tasks || [];
+      const tasks = _data?.tasks || [];
       for (const task of tasks) {
         await this.memoryManager.storeTaskCard(task.id, task);
       }
@@ -372,12 +370,12 @@ export class Orchestrator {
     }
   }
 
-  async _executeDevPhase(data) {
+  async _executeDevPhase(_data) {
     try {
       // Execute tasks using task graph
-      const tasks = data?.tasks || [];
+      const tasks = _data?.tasks || [];
       if (tasks.length > 0) {
-        const results = await this.executeTasks(tasks, data?.options || {});
+        const results = await this.executeTasks(tasks, _data?.options || {});
         return { phase: WorkflowPhase.DEV, status: 'completed', results };
       }
       return { phase: WorkflowPhase.DEV, status: 'completed', result: 'No tasks to execute' };
@@ -386,21 +384,25 @@ export class Orchestrator {
     }
   }
 
-  async _executeTestPhase(data) {
+  async _executeTestPhase(_data) {
     try {
       const { TestRunner } = await import('../testing/test-runner.js');
       const testRunner = new TestRunner({ projectRoot: this.projectRoot });
       const results = await testRunner.runAllTests();
-      return { phase: WorkflowPhase.TEST, status: results.success ? 'completed' : 'failed', results };
+      return {
+        phase: WorkflowPhase.TEST,
+        status: results.success ? 'completed' : 'failed',
+        results,
+      };
     } catch (error) {
       return { phase: WorkflowPhase.TEST, status: 'failed', error: error.message };
     }
   }
 
-  async _executeFixPhase(data) {
+  async _executeFixPhase(_data) {
     try {
       // Handle test failures
-      const failedTests = data?.failedTests || [];
+      const failedTests = _data?.failedTests || [];
       if (failedTests.length > 0) {
         // Create fix tasks for failed tests
         const fixTasks = failedTests.map((test, index) => ({
@@ -417,21 +419,21 @@ export class Orchestrator {
     }
   }
 
-  async _executeRegressionPhase(data) {
+  async _executeRegressionPhase(_data) {
     try {
       // Re-run all tests for regression
       const { TestRunner } = await import('../testing/test-runner.js');
       const testRunner = new TestRunner({ projectRoot: this.projectRoot });
       const results = await testRunner.runAllTests();
-      return { 
-        phase: WorkflowPhase.REGRESSION, 
-        status: results.success ? 'completed' : 'failed', 
+      return {
+        phase: WorkflowPhase.REGRESSION,
+        status: results.success ? 'completed' : 'failed',
         results,
         summary: {
           total: results.summary?.total || 0,
           passed: results.summary?.passed || 0,
           failed: results.summary?.failed || 0,
-        }
+        },
       };
     } catch (error) {
       return { phase: WorkflowPhase.REGRESSION, status: 'failed', error: error.message };

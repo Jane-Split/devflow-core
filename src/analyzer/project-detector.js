@@ -5,7 +5,6 @@
 
 import { join } from 'path';
 import fs from 'fs-extra';
-import { AnalysisError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('ProjectTypeDetector');
@@ -35,12 +34,7 @@ const DETECTION_SIGNATURES = {
       'nuxt.config.js',
       'angular.json',
     ],
-    dirs: [
-      'src/components',
-      'src/pages',
-      'public',
-      'src/app',
-    ],
+    dirs: ['src/components', 'src/pages', 'public', 'src/app'],
   },
   backend: {
     files: [
@@ -54,30 +48,11 @@ const DETECTION_SIGNATURES = {
       'composer.json', // PHP
       'Gemfile', // Ruby
     ],
-    dirs: [
-      'src/main',
-      'src/main/java',
-      'src/main/resources',
-      'app',
-      'controllers',
-      'models',
-    ],
+    dirs: ['src/main', 'src/main/java', 'src/main/resources', 'app', 'controllers', 'models'],
   },
   microservice: {
-    files: [
-      'docker-compose.yml',
-      'docker-compose.yaml',
-      'k8s',
-      'kubernetes',
-    ],
-    dirs: [
-      'services',
-      'microservices',
-      'apps',
-      'k8s',
-      'kubernetes',
-      'deployments',
-    ],
+    files: ['docker-compose.yml', 'docker-compose.yaml', 'k8s', 'kubernetes'],
+    dirs: ['services', 'microservices', 'apps', 'k8s', 'kubernetes', 'deployments'],
   },
 };
 
@@ -157,17 +132,35 @@ export class ProjectTypeDetector {
         const deps = { ...content.dependencies, ...content.devDependencies };
 
         // Check for frontend frameworks
-        if (deps.react || deps['react-dom']) score += 5;
-        if (deps.vue || deps['vue-router']) score += 5;
-        if (deps.angular || deps['@angular/core']) score += 5;
-        if (deps.svelte) score += 5;
-        if (deps.next) score += 3;
-        if (deps.nuxt) score += 3;
+        if (deps.react || deps['react-dom']) {
+          score += 5;
+        }
+        if (deps.vue || deps['vue-router']) {
+          score += 5;
+        }
+        if (deps.angular || deps['@angular/core']) {
+          score += 5;
+        }
+        if (deps.svelte) {
+          score += 5;
+        }
+        if (deps.next) {
+          score += 3;
+        }
+        if (deps.nuxt) {
+          score += 3;
+        }
 
         // Check for build tools
-        if (deps.vite) score += 2;
-        if (deps.webpack) score += 2;
-        if (deps['@angular/cli']) score += 2;
+        if (deps.vite) {
+          score += 2;
+        }
+        if (deps.webpack) {
+          score += 2;
+        }
+        if (deps['@angular/cli']) {
+          score += 2;
+        }
       }
 
       if (type === 'backend') {
@@ -234,11 +227,15 @@ export class ProjectTypeDetector {
   /**
    * Calculate confidence level
    */
-  _calculateConfidence(type) {
+  _calculateConfidence(_type) {
     const maxScore = Math.max(...Object.values(this.scores));
-    
-    if (maxScore >= 10) return 'high';
-    if (maxScore >= 5) return 'medium';
+
+    if (maxScore >= 10) {
+      return 'high';
+    }
+    if (maxScore >= 5) {
+      return 'medium';
+    }
     return 'low';
   }
 
@@ -247,7 +244,7 @@ export class ProjectTypeDetector {
    */
   async hasFramework(framework) {
     const packageJsonPath = join(this.projectRoot, 'package.json');
-    
+
     if (!(await fs.pathExists(packageJsonPath))) {
       return false;
     }
@@ -267,10 +264,10 @@ export class ProjectTypeDetector {
    */
   async checkFrontend() {
     logger.debug('Checking frontend project type');
-    
+
     const score = await this._calculateScore('frontend');
     const isFrontend = score >= 3;
-    
+
     // Detect specific framework
     let framework = null;
     const frameworks = ['react', 'vue', 'angular', 'svelte', 'next', 'nuxt'];
@@ -295,10 +292,10 @@ export class ProjectTypeDetector {
    */
   async checkBackend() {
     logger.debug('Checking backend project type');
-    
+
     const score = await this._calculateScore('backend');
     const isBackend = score >= 3;
-    
+
     // Detect specific language/framework
     const languages = [];
     const checks = [
@@ -333,10 +330,10 @@ export class ProjectTypeDetector {
    */
   async checkMicroservice() {
     logger.debug('Checking microservice project type');
-    
+
     const score = await this._calculateScore('microservice');
     const isMicroservice = score >= 5;
-    
+
     // Count services
     let serviceCount = 0;
     const serviceDirs = ['services', 'microservices', 'apps'];
@@ -365,14 +362,14 @@ export class ProjectTypeDetector {
   _getFrontendIndicators() {
     const indicators = [];
     const signatures = DETECTION_SIGNATURES.frontend;
-    
+
     for (const file of signatures.files) {
       indicators.push({ type: 'file', name: file });
     }
     for (const dir of signatures.dirs) {
       indicators.push({ type: 'directory', name: dir });
     }
-    
+
     return indicators;
   }
 
@@ -383,14 +380,14 @@ export class ProjectTypeDetector {
   _getBackendIndicators() {
     const indicators = [];
     const signatures = DETECTION_SIGNATURES.backend;
-    
+
     for (const file of signatures.files) {
       indicators.push({ type: 'file', name: file });
     }
     for (const dir of signatures.dirs) {
       indicators.push({ type: 'directory', name: dir });
     }
-    
+
     return indicators;
   }
 
@@ -401,14 +398,14 @@ export class ProjectTypeDetector {
   _getMicroserviceIndicators() {
     const indicators = [];
     const signatures = DETECTION_SIGNATURES.microservice;
-    
+
     for (const file of signatures.files) {
       indicators.push({ type: 'file', name: file });
     }
     for (const dir of signatures.dirs) {
       indicators.push({ type: 'directory', name: dir });
     }
-    
+
     return indicators;
   }
 }

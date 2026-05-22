@@ -8,7 +8,7 @@ import { join } from 'path';
 import { FileMemoryProvider } from './file-provider.js';
 import { PersistentVectorIndex } from './vector-index.js';
 import { MemoryCategories } from './protocol.js';
-import { MemoryError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, MemoryError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('MemoryManager');
@@ -26,7 +26,7 @@ export class MemoryManager {
   constructor(options = {}) {
     this.projectRoot = options.projectRoot || process.cwd();
     this.config = options.config || {};
-    
+
     this.fileProvider = null;
     this.vectorIndex = null;
     this.initialized = false;
@@ -36,7 +36,9 @@ export class MemoryManager {
    * Initialize memory manager
    */
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      return;
+    }
 
     logger.debug('Initializing MemoryManager...');
 
@@ -75,11 +77,7 @@ export class MemoryManager {
   async store(category, id, content, options = {}) {
     await this.initialize();
 
-    const { 
-      metadata = {}, 
-      indexForSearch = true,
-      searchText,
-    } = options;
+    const { metadata = {}, indexForSearch = true, searchText } = options;
 
     try {
       // Store in file provider
@@ -210,10 +208,7 @@ export class MemoryManager {
 
       return enrichedResults;
     } catch (error) {
-      throw new MemoryError(
-        `Search failed: ${error.message}`,
-        ErrorCodes.MEMORY_READ_ERROR
-      );
+      throw new MemoryError(`Search failed: ${error.message}`, ErrorCodes.MEMORY_READ_ERROR);
     }
   }
 
@@ -329,7 +324,7 @@ export class MemoryManager {
    */
   async storeTaskCard(id, taskCard) {
     return this.store(MemoryCategories.TASK_CARD, id, taskCard, {
-      metadata: { 
+      metadata: {
         source: 'split-phase',
         status: taskCard.status || 'pending',
         priority: taskCard.priority || 'medium',
@@ -345,7 +340,7 @@ export class MemoryManager {
   async recordExecutionLog(taskId, log) {
     const id = `${taskId}-${Date.now()}`;
     return this.store(MemoryCategories.EXECUTION_LOG, id, log, {
-      metadata: { 
+      metadata: {
         source: 'execution',
         taskId,
         timestamp: new Date().toISOString(),

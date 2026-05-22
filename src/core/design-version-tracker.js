@@ -108,7 +108,11 @@ export class DesignVersionTracker {
     this.versionHistory.get(designDocId).push(newVersion);
 
     // Notify affected tasks
-    const affectedTasks = await this.notifyAffectedTasks(designDocId, currentVersion?.id, newVersion.id);
+    const affectedTasks = await this.notifyAffectedTasks(
+      designDocId,
+      currentVersion?.id,
+      newVersion.id
+    );
 
     logger.info(`Design document ${designDocId} updated to ${newVersion.id}`);
 
@@ -206,9 +210,11 @@ export class DesignVersionTracker {
 
     for (const taskRef of affectedTasks) {
       const task = await this._getTask(taskRef.taskId);
-      if (!task) continue;
+      if (!task) {
+        continue;
+      }
 
-      let notification = {
+      const notification = {
         taskId: taskRef.taskId,
         designDocId,
         oldVersionId,
@@ -291,9 +297,7 @@ export class DesignVersionTracker {
    * @returns {string} Hash
    */
   _computeHash(content) {
-    const normalized = typeof content === 'string'
-      ? content
-      : JSON.stringify(content);
+    const normalized = typeof content === 'string' ? content : JSON.stringify(content);
     return createHash('sha256').update(normalized).digest('hex');
   }
 
@@ -328,7 +332,7 @@ export class DesignVersionTracker {
       const entries = await this.memoryManager.list('design-versions');
 
       for (const entry of entries) {
-        const [designDocId, versionId] = entry.id.split(':');
+        const [designDocId] = entry.id.split(':');
         if (!this.versionHistory.has(designDocId)) {
           this.versionHistory.set(designDocId, []);
         }
@@ -371,7 +375,10 @@ export class DesignVersionTracker {
    * @returns {Promise<string>} Content
    */
   async _loadVersionContent(designDocId, versionId) {
-    const entry = await this.memoryManager.retrieve('design-versions', `${designDocId}:${versionId}`);
+    const entry = await this.memoryManager.retrieve(
+      'design-versions',
+      `${designDocId}:${versionId}`
+    );
     return entry?.content?.content || '';
   }
 

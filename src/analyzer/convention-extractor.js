@@ -3,10 +3,9 @@
  * Extracts naming conventions, file organization patterns from source code
  */
 
-import { join, extname, basename } from 'path';
+import { basename, extname, join } from 'path';
 import fs from 'fs-extra';
 import { glob } from 'glob';
-import { AnalysisError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('ConventionExtractor');
@@ -62,7 +61,7 @@ export class ConventionExtractor {
    */
   async _scanProject() {
     const srcDir = join(this.projectRoot, 'src');
-    
+
     if (!(await fs.pathExists(srcDir))) {
       // Try to find source files in root
       this.files = await glob('**/*.{js,ts,jsx,tsx,vue,py,java,go,rs}', {
@@ -156,11 +155,7 @@ export class ConventionExtractor {
   _getHookFiles() {
     return this.files.filter(f => {
       const name = basename(f, extname(f));
-      return (
-        f.includes('/hooks/') ||
-        name.startsWith('use') ||
-        name.startsWith('use-')
-      );
+      return f.includes('/hooks/') || name.startsWith('use') || name.startsWith('use-');
     });
   }
 
@@ -169,11 +164,7 @@ export class ConventionExtractor {
    */
   _getUtilFiles() {
     return this.files.filter(f => {
-      return (
-        f.includes('/utils/') ||
-        f.includes('/helpers/') ||
-        f.includes('/lib/')
-      );
+      return f.includes('/utils/') || f.includes('/helpers/') || f.includes('/lib/');
     });
   }
 
@@ -191,7 +182,7 @@ export class ConventionExtractor {
 
     for (const file of files) {
       const name = basename(file, extname(file));
-      
+
       for (const [pattern, regex] of Object.entries(NAMING_PATTERNS)) {
         if (regex.test(name)) {
           counts[pattern]++;
@@ -202,7 +193,7 @@ export class ConventionExtractor {
     // Find dominant pattern
     let dominant = 'unknown';
     let maxCount = 0;
-    
+
     for (const [pattern, count] of Object.entries(counts)) {
       if (count > maxCount) {
         maxCount = count;
@@ -229,22 +220,18 @@ export class ConventionExtractor {
     };
 
     // Check for feature-based organization
-    const hasFeatures = this.directories.some(d => 
-      d.includes('/features/') || d.includes('/modules/')
+    const hasFeatures = this.directories.some(
+      d => d.includes('/features/') || d.includes('/modules/')
     );
-    
+
     // Check for type-based organization
-    const hasTypes = this.directories.some(d =>
-      d.includes('/components/') &&
-      d.includes('/hooks/') &&
-      d.includes('/utils/')
+    const hasTypes = this.directories.some(
+      d => d.includes('/components/') && d.includes('/hooks/') && d.includes('/utils/')
     );
 
     // Check for layer-based organization (common in backend)
-    const hasLayers = this.directories.some(d =>
-      d.includes('/controllers/') ||
-      d.includes('/services/') ||
-      d.includes('/repositories/')
+    const hasLayers = this.directories.some(
+      d => d.includes('/controllers/') || d.includes('/services/') || d.includes('/repositories/')
     );
 
     organization.byFeature = hasFeatures;
@@ -252,9 +239,15 @@ export class ConventionExtractor {
     organization.byLayer = hasLayers;
 
     // Determine primary pattern
-    if (hasFeatures) organization.patterns.push('feature-based');
-    if (hasTypes) organization.patterns.push('type-based');
-    if (hasLayers) organization.patterns.push('layer-based');
+    if (hasFeatures) {
+      organization.patterns.push('feature-based');
+    }
+    if (hasTypes) {
+      organization.patterns.push('type-based');
+    }
+    if (hasLayers) {
+      organization.patterns.push('layer-based');
+    }
 
     return organization;
   }
@@ -291,7 +284,7 @@ export class ConventionExtractor {
 
     for (const dir of this.directories) {
       const folderName = dir.split('/').pop();
-      
+
       if (commonPatterns[folderName]) {
         structure.commonFolders.push({
           name: folderName,
@@ -329,7 +322,7 @@ export class ConventionExtractor {
     if (config?.compilerOptions?.paths) {
       patterns.usesPathAliases = true;
       patterns.aliases = Object.keys(config.compilerOptions.paths);
-      
+
       if (config.compilerOptions.baseUrl) {
         patterns.usesAbsoluteImports = true;
       }
@@ -370,13 +363,13 @@ export class ConventionExtractor {
 
     // Sample a few files to detect style
     const sampleFiles = this.files.slice(0, 5);
-    
+
     for (const file of sampleFiles) {
       try {
         const filePath = join(this.projectRoot, 'src', file);
         if (await fs.pathExists(filePath)) {
           const content = await fs.readFile(filePath, 'utf8');
-          
+
           // Detect indent style
           if (content.includes('  ')) {
             style.indentStyle = 'space-2';
@@ -408,7 +401,7 @@ export class ConventionExtractor {
               !trimmed.endsWith('}')
             );
           });
-          
+
           if (linesWithoutSemicolons.length > 10) {
             style.semicolons = false;
           }

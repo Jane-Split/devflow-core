@@ -59,7 +59,11 @@ export async function executeAnalyze(options = {}) {
       }
     }
 
-    if (typeResult.type === 'backend' || typeResult.type === 'fullstack' || typeResult.type === 'microservice') {
+    if (
+      typeResult.type === 'backend' ||
+      typeResult.type === 'fullstack' ||
+      typeResult.type === 'microservice'
+    ) {
       spinner.text = 'Analyzing backend...';
       try {
         const analyzer = new BackendAnalyzer(projectRoot);
@@ -92,17 +96,27 @@ export async function executeAnalyze(options = {}) {
 
     // Display results
     console.log(chalk.blue('\n📊 Project Analysis Results\n'));
-    console.log(chalk.gray('Type:'), chalk.green(typeResult.type), chalk.gray(`(${typeResult.confidence} confidence)`));
-    
+    console.log(
+      chalk.gray('Type:'),
+      chalk.green(typeResult.type),
+      chalk.gray(`(${typeResult.confidence} confidence)`)
+    );
+
     if (frontendAnalysis?.framework) {
       console.log(chalk.gray('Frontend:'), chalk.green(frontendAnalysis.framework.name));
     }
-    
+
     if (backendAnalysis?.framework) {
       console.log(chalk.gray('Backend:'), chalk.green(backendAnalysis.framework.name));
     }
 
-    console.log(chalk.gray('Conventions:'), conventions.naming.componentPattern, 'components,', conventions.naming.functionPattern, 'functions');
+    console.log(
+      chalk.gray('Conventions:'),
+      conventions.naming.componentPattern,
+      'components,',
+      conventions.naming.functionPattern,
+      'functions'
+    );
 
     // Save to file if output path provided
     if (outputPath) {
@@ -124,7 +138,6 @@ export async function executeAnalyze(options = {}) {
     }
 
     return projectProfile;
-
   } catch (error) {
     spinner.fail('Analysis failed');
     handleCliError(error, process.env.DEVFLOW_DEBUG === 'true');
@@ -178,7 +191,10 @@ export async function executeResearch(options = {}) {
     const shouldAnalyzeFrontend = scope === 'all' || scope === 'frontend';
     const shouldAnalyzeBackend = scope === 'all' || scope === 'backend' || scope === 'database';
 
-    if ((typeResult.type === 'frontend' || typeResult.type === 'fullstack') && shouldAnalyzeFrontend) {
+    if (
+      (typeResult.type === 'frontend' || typeResult.type === 'fullstack') &&
+      shouldAnalyzeFrontend
+    ) {
       spinner.text = 'Analyzing frontend structure...';
       try {
         const analyzer = new FrontendAnalyzer(projectRoot);
@@ -188,7 +204,12 @@ export async function executeResearch(options = {}) {
       }
     }
 
-    if ((typeResult.type === 'backend' || typeResult.type === 'fullstack' || typeResult.type === 'microservice') && shouldAnalyzeBackend) {
+    if (
+      (typeResult.type === 'backend' ||
+        typeResult.type === 'fullstack' ||
+        typeResult.type === 'microservice') &&
+      shouldAnalyzeBackend
+    ) {
       spinner.text = 'Analyzing backend structure...';
       try {
         const analyzer = new BackendAnalyzer(projectRoot);
@@ -243,20 +264,27 @@ export async function executeResearch(options = {}) {
     console.log(chalk.blue('\n📋 Project Profile Summary\n'));
     console.log(chalk.gray('Type:'), chalk.green(typeResult.type));
     console.log(chalk.gray('Confidence:'), chalk.green(typeResult.confidence));
-    
+
     if (frontendAnalysis?.framework) {
-      console.log(chalk.gray('Frontend Framework:'), chalk.green(`${frontendAnalysis.framework.name} (${frontendAnalysis.uiLibrary?.name || 'No UI library'})`));
+      console.log(
+        chalk.gray('Frontend Framework:'),
+        chalk.green(
+          `${frontendAnalysis.framework.name} (${frontendAnalysis.uiLibrary?.name || 'No UI library'})`
+        )
+      );
     }
-    
+
     if (backendAnalysis?.framework) {
-      console.log(chalk.gray('Backend Framework:'), chalk.green(`${backendAnalysis.framework.name} (${backendAnalysis.language})`));
+      console.log(
+        chalk.gray('Backend Framework:'),
+        chalk.green(`${backendAnalysis.framework.name} (${backendAnalysis.language})`)
+      );
     }
 
     console.log(chalk.blue(`\n✓ Project profile saved to memory`));
     console.log(chalk.blue(`✓ AGENTS.md generated at ${agentsMdPath}`));
 
     return projectProfile;
-
   } catch (error) {
     spinner.fail('Research failed');
     handleCliError(error, process.env.DEVFLOW_DEBUG === 'true');

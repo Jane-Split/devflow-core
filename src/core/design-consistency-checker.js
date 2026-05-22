@@ -14,10 +14,10 @@ const logger = new Logger('DesignConsistencyChecker');
  * Consistency check result types
  */
 export const ConsistencyResultType = {
-  MATCH: 'match',           // Implementation matches design
-  DEVIATION: 'deviation',   // Implementation differs from design
-  MISSING: 'missing',       // Design specifies but implementation missing
-  EXTRA: 'extra',           // Implementation exists but not in design
+  MATCH: 'match', // Implementation matches design
+  DEVIATION: 'deviation', // Implementation differs from design
+  MISSING: 'missing', // Design specifies but implementation missing
+  EXTRA: 'extra', // Implementation exists but not in design
 };
 
 /**
@@ -148,7 +148,9 @@ export class DesignConsistencyChecker {
     }
 
     // Extract method/function definitions
-    const methodMatches = content.matchAll(/(?:function|def|async\s+function|public|private|protected)?\s*(\w+)\s*\([^)]*\)/g);
+    const methodMatches = content.matchAll(
+      /(?:function|def|async\s+function|public|private|protected)?\s*(\w+)\s*\([^)]*\)/g
+    );
     for (const match of methodMatches) {
       specs.methods.push({
         name: match[1],
@@ -395,12 +397,14 @@ export class DesignConsistencyChecker {
    * @returns {Object} Report
    */
   _generateReport(comparison, task) {
-    const total = comparison.matches.length + comparison.deviations.length +
-                  comparison.missing.length + comparison.extra.length;
+    const total =
+      comparison.matches.length +
+      comparison.deviations.length +
+      comparison.missing.length +
+      comparison.extra.length;
 
-    const consistencyScore = total > 0
-      ? (comparison.matches.length / total * 100).toFixed(1)
-      : 100;
+    const consistencyScore =
+      total > 0 ? ((comparison.matches.length / total) * 100).toFixed(1) : 100;
 
     return {
       taskId: task.id,
@@ -469,35 +473,45 @@ export class DesignConsistencyChecker {
     // Extract interface/class definitions
     const interfaceMatches = content.matchAll(/(?:interface|class)\s+(\w+)[\s{]/g);
     for (const match of interfaceMatches) {
-      fingerprints.push(new ImplementationFingerprint({
-        type: FingerprintType.INTERFACE,
-        name: match[1],
-        signature: match[0],
-        location: `${filePath}:${this._getLineNumber(content, match.index)}`,
-      }));
+      fingerprints.push(
+        new ImplementationFingerprint({
+          type: FingerprintType.INTERFACE,
+          name: match[1],
+          signature: match[0],
+          location: `${filePath}:${this._getLineNumber(content, match.index)}`,
+        })
+      );
     }
 
     // Extract function/method definitions
-    const functionMatches = content.matchAll(/(?:function|const|let|var|async\s+function)\s+(\w+)\s*[=\(]/g);
+    const functionMatches = content.matchAll(
+      /(?:function|const|let|var|async\s+function)\s+(\w+)\s*[=()]/g
+    );
     for (const match of functionMatches) {
-      fingerprints.push(new ImplementationFingerprint({
-        type: FingerprintType.METHOD,
-        name: match[1],
-        signature: match[0],
-        location: `${filePath}:${this._getLineNumber(content, match.index)}`,
-      }));
+      fingerprints.push(
+        new ImplementationFingerprint({
+          type: FingerprintType.METHOD,
+          name: match[1],
+          signature: match[0],
+          location: `${filePath}:${this._getLineNumber(content, match.index)}`,
+        })
+      );
     }
 
     // Extract API endpoints (Express-style)
-    const endpointMatches = content.matchAll(/(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/gi);
+    const endpointMatches = content.matchAll(
+      /(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/gi
+    );
     for (const match of endpointMatches) {
-      fingerprints.push(new ImplementationFingerprint({
-        type: FingerprintType.ENDPOINT,
-        name: `${match[1].toUpperCase()} ${match[2]}`,
-        signature: match[2],
-        parameters: [],
-        location: `${filePath}:${this._getLineNumber(content, match.index)}`,
-      }));
+      fingerprints.push(
+        new ImplementationFingerprint({
+          type: FingerprintType.ENDPOINT,
+          name: `${match[1].toUpperCase()} ${match[2]}`,
+          signature: match[2],
+          parameters: [],
+          location: `${filePath}:${this._getLineNumber(content, match.index)}`,
+        })
+      );
     }
 
     return fingerprints;

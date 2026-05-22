@@ -3,7 +3,7 @@
  * Playwright-based browser automation for E2E testing
  */
 
-import { TestingError, ErrorCodes } from '../utils/errors.js';
+import { ErrorCodes, TestingError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('BrowserRunner');
@@ -180,9 +180,7 @@ export class BrowserRunner {
         timeout: options.timeout || this.timeout,
       });
     } else {
-      await Promise.all([
-        this.page.waitForLoadState('networkidle'),
-      ]);
+      await Promise.all([this.page.waitForLoadState('networkidle')]);
     }
     return this;
   }
@@ -282,7 +280,9 @@ export class BrowserRunner {
         lines.push(`  await page.screenshot({ path: '${action.path}' });`);
         break;
       case 'assert':
-        lines.push(`  await expect(page.locator('${action.selector}')).${action.assertion}(${action.value ? `'${action.value}'` : ''});`);
+        lines.push(
+          `  await expect(page.locator('${action.selector}')).${action.assertion}(${action.value ? `'${action.value}'` : ''});`
+        );
         break;
       case 'waitForNavigation':
         lines.push(`  await page.waitForNavigation();`);
@@ -346,7 +346,6 @@ export class BrowserRunner {
           stepResult.screenshot = path;
         }
       }
-
     } catch (error) {
       results.error = error.message;
       results.passed = false;

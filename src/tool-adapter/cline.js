@@ -4,9 +4,6 @@
  */
 
 import { BaseToolAdapter, ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('ClineAdapter');
 
 /**
  * Cline Tool Adapter
@@ -86,7 +83,7 @@ export class ClineAdapter extends BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {string} Pseudo-code instructions
    */
-  buildSubagentCommand(task, options = {}) {
+  buildSubagentCommand(task, _options = {}) {
     // Cline doesn't support native subagent
     // Return detailed pseudo-code instead
     const lines = [

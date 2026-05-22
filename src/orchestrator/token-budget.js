@@ -4,7 +4,6 @@
  * 5-step compression pipeline
  */
 
-import { OrchestrationError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('TokenBudgetManager');
@@ -28,9 +27,8 @@ export class CompressionResult {
     this.originalTokens = originalTokens;
     this.compressedTokens = compressedTokens;
     this.strategies = strategies;
-    this.savingsRatio = originalTokens > 0 
-      ? (originalTokens - compressedTokens) / originalTokens 
-      : 0;
+    this.savingsRatio =
+      originalTokens > 0 ? (originalTokens - compressedTokens) / originalTokens : 0;
   }
 }
 
@@ -47,7 +45,7 @@ export class TokenBudgetManager {
     this.contextLimit = config.contextLimit || 128000;
     this.safetyMargin = config.safetyMargin || 0.1;
     this.effectiveLimit = Math.floor(this.contextLimit * (1 - this.safetyMargin));
-    
+
     // Compression strategy configurations
     this.strategies = {
       [CompressionStrategy.COMPRESS_DESIGN_DOC]: {
@@ -82,13 +80,15 @@ export class TokenBudgetManager {
    * @returns {number} Estimated token count
    */
   estimateTokens(text) {
-    if (!text) return 0;
-    
+    if (!text) {
+      return 0;
+    }
+
     // Common estimation: ~4 characters per token for English
     // ~2 characters per token for Chinese
     const englishChars = text.replace(/[\u4e00-\u9fff]/g, '').length;
     const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-    
+
     return Math.ceil(englishChars / 4 + chineseChars / 2);
   }
 
@@ -131,8 +131,7 @@ export class TokenBudgetManager {
     logger.debug(`Running compression pipeline. Current tokens: ${currentTokens}`);
 
     const strategies = [];
-    let compressed = structuredClone(context);
-    let reduced = 0;
+    const compressed = structuredClone(context);
     const targetReduction = this.calculateReductionNeeded(currentTokens);
 
     if (targetReduction <= 0) {
@@ -147,7 +146,6 @@ export class TokenBudgetManager {
         const result = await this._compressDesignDoc(compressed.designDoc);
         compressed.designDoc = result.compressed;
         currentTokens -= result.saved;
-        reduced += result.saved;
         strategies.push(CompressionStrategy.COMPRESS_DESIGN_DOC);
         logger.debug(`Step 1: Compressed design doc, saved ${result.saved} tokens`);
       }
@@ -164,7 +162,6 @@ export class TokenBudgetManager {
         const result = await this._summarizeCodeFiles(compressed.codeFiles);
         compressed.codeFiles = result.summarized;
         currentTokens -= result.saved;
-        reduced += result.saved;
         strategies.push(CompressionStrategy.SUMMARIZE_CODE_FILES);
         logger.debug(`Step 2: Summarized code files, saved ${result.saved} tokens`);
       }
@@ -181,7 +178,6 @@ export class TokenBudgetManager {
         const result = await this._removeRetrievalContext(compressed.retrievalContext);
         compressed.retrievalContext = result.removed ? null : compressed.retrievalContext;
         currentTokens -= result.saved;
-        reduced += result.saved;
         strategies.push(CompressionStrategy.REMOVE_RETRIEVAL_CONTEXT);
         logger.debug(`Step 3: Removed retrieval context, saved ${result.saved} tokens`);
       }
@@ -198,7 +194,6 @@ export class TokenBudgetManager {
         const result = await this._compressTaskContext(compressed.taskContext);
         compressed.taskContext = result.compressed;
         currentTokens -= result.saved;
-        reduced += result.saved;
         strategies.push(CompressionStrategy.COMPRESS_TASK_CONTEXT);
         logger.debug(`Step 4: Compressed task context, saved ${result.saved} tokens`);
       }
@@ -248,7 +243,7 @@ export class TokenBudgetManager {
     }
 
     const originalLength = designDoc.length;
-    
+
     // Remove excessive whitespace
     let compressed = designDoc
       .replace(/\n{3,}/g, '\n\n')
@@ -258,7 +253,7 @@ export class TokenBudgetManager {
     // If still too long, truncate and add summary
     const maxLength = Math.floor(originalLength * 0.3);
     if (compressed.length > maxLength) {
-      compressed = compressed.slice(0, maxLength) + '\n\n[... Design document truncated for context limits ...]';
+      compressed = `${compressed.slice(0, maxLength)}\n\n[... Design document truncated for context limits ...]`;
     }
 
     const saved = originalLength - compressed.length;
@@ -277,7 +272,7 @@ export class TokenBudgetManager {
     const summarized = codeFiles.map(file => ({
       path: file.path,
       summary: file.summary || this._generateFileSummary(file.content || ''),
-      lineCount: file.lineCount || (file.content?.split('\n').length || 0),
+      lineCount: file.lineCount || file.content?.split('\n').length || 0,
       keyFunctions: file.keyFunctions || this._extractKeyFunctions(file.content || ''),
     }));
 
@@ -289,12 +284,14 @@ export class TokenBudgetManager {
    * Generate file summary
    */
   _generateFileSummary(content) {
-    if (!content) return 'Empty file';
-    
+    if (!content) {
+      return 'Empty file';
+    }
+
     const lines = content.split('\n');
     const imports = lines.filter(l => l.trim().startsWith('import')).slice(0, 5);
     const exports = lines.filter(l => l.includes('export'));
-    
+
     return `File with ${lines.length} lines, ${imports.length} imports, ${exports.length} exports`;
   }
 
@@ -302,16 +299,18 @@ export class TokenBudgetManager {
    * Extract key functions
    */
   _extractKeyFunctions(content) {
-    if (!content) return [];
-    
-    const functionRegex = /(?:function|const|let|var)\s+(\w+)\s*[=\(]/g;
+    if (!content) {
+      return [];
+    }
+
+    const functionRegex = /(?:function|const|let|var)\s+(\w+)\s*[=()]/g;
     const matches = [];
     let match;
-    
+
     while ((match = functionRegex.exec(content)) !== null && matches.length < 10) {
       matches.push(match[1]);
     }
-    
+
     return matches;
   }
 
@@ -323,9 +322,10 @@ export class TokenBudgetManager {
       return { removed: false, saved: 0 };
     }
 
-    const saved = typeof retrievalContext === 'string' 
-      ? retrievalContext.length 
-      : JSON.stringify(retrievalContext).length;
+    const saved =
+      typeof retrievalContext === 'string'
+        ? retrievalContext.length
+        : JSON.stringify(retrievalContext).length;
 
     return { removed: true, saved };
   }
@@ -360,14 +360,16 @@ export class TokenBudgetManager {
    * Truncate text with ellipsis
    */
   _truncateText(text, maxLength) {
-    if (!text || text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
+    if (!text || text.length <= maxLength) {
+      return text;
+    }
+    return `${text.slice(0, maxLength)}...`;
   }
 
   /**
    * Generate subtask hints for splitting
    */
-  _generateSubtaskHints(task) {
+  _generateSubtaskHints(_task) {
     // Analyze task and suggest how to split
     return {
       reason: 'Task exceeds context limits',
@@ -386,9 +388,11 @@ export class TokenBudgetManager {
   getStats() {
     return {
       totalCompressions: this.compressionHistory.length,
-      averageSavings: this.compressionHistory.length > 0
-        ? this.compressionHistory.reduce((sum, r) => sum + r.savingsRatio, 0) / this.compressionHistory.length
-        : 0,
+      averageSavings:
+        this.compressionHistory.length > 0
+          ? this.compressionHistory.reduce((sum, r) => sum + r.savingsRatio, 0) /
+            this.compressionHistory.length
+          : 0,
       contextLimit: this.contextLimit,
       effectiveLimit: this.effectiveLimit,
       history: this.compressionHistory.slice(-10), // Last 10 compressions
@@ -413,6 +417,6 @@ export function checkBudget(content, limit = 128000) {
     tokens,
     fits: tokens <= manager.effectiveLimit,
     limit: manager.effectiveLimit,
-    percentage: ((tokens / manager.effectiveLimit) * 100).toFixed(1) + '%',
+    percentage: `${((tokens / manager.effectiveLimit) * 100).toFixed(1)}%`,
   };
 }

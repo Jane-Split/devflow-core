@@ -3,20 +3,16 @@
  * Abstract base class for AI tool adapters
  */
 
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('BaseToolAdapter');
-
 /**
  * Tool capabilities
  */
 export const ToolCapability = {
-  SUBAGENT: 'subagent',           // Supports native subagent
-  MULTI_FILE: 'multiFile',        // Can edit multiple files
+  SUBAGENT: 'subagent', // Supports native subagent
+  MULTI_FILE: 'multiFile', // Can edit multiple files
   CONTEXT_WINDOW: 'contextWindow', // Has large context window
-  BROWSER: 'browser',             // Has browser automation
-  TERMINAL: 'terminal',           // Has terminal access
-  MCP: 'mcp',                     // Supports MCP protocol
+  BROWSER: 'browser', // Has browser automation
+  TERMINAL: 'terminal', // Has terminal access
+  MCP: 'mcp', // Supports MCP protocol
 };
 
 /**
@@ -48,7 +44,7 @@ export class BaseToolAdapter {
    * @param {Object} context - Task context
    * @returns {string} Generated prompt
    */
-  buildPrompt(task, context = {}) {
+  buildPrompt(_task, _context = {}) {
     throw new Error('buildPrompt must be implemented by subclass');
   }
 
@@ -58,7 +54,7 @@ export class BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {string|null} Subagent command or null if not supported
    */
-  buildSubagentCommand(task, options = {}) {
+  buildSubagentCommand(_task, _options = {}) {
     if (!this.hasCapability(ToolCapability.SUBAGENT)) {
       return null;
     }
@@ -151,9 +147,11 @@ export class BaseToolAdapter {
     if (context.designDoc) {
       lines.push('### Design Document');
       lines.push('```markdown');
-      lines.push(typeof context.designDoc === 'string'
-        ? context.designDoc
-        : JSON.stringify(context.designDoc, null, 2));
+      lines.push(
+        typeof context.designDoc === 'string'
+          ? context.designDoc
+          : JSON.stringify(context.designDoc, null, 2)
+      );
       lines.push('```');
       lines.push('');
     }
@@ -182,7 +180,9 @@ export class BaseToolAdapter {
    * @returns {number} Estimated tokens
    */
   estimateTokens(content) {
-    if (!content) return 0;
+    if (!content) {
+      return 0;
+    }
     const str = typeof content === 'string' ? content : JSON.stringify(content);
     // ~4 chars per token for English, ~2 for Chinese
     const englishChars = str.replace(/[\u4e00-\u9fff]/g, '').length;

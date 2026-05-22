@@ -1,12 +1,12 @@
 /**
  * Skill Registry - Skill 注册中心
- * 
+ *
  * 管理所有 DevFlow Skills，支持动态注册和解析
  * 兼容 Trae、Cursor、Windsurf 等 AI 工具的 /command 系统
  */
 
 import { readFile, readdir } from 'fs/promises';
-import { join, dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,11 +48,13 @@ class SkillRegistry {
    * 初始化注册中心，加载所有 Skill
    */
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      return;
+    }
 
     try {
       const skillFiles = await this._discoverSkillFiles();
-      
+
       for (const file of skillFiles) {
         const skill = await this._parseSkillFile(file);
         if (skill) {
@@ -121,14 +123,14 @@ class SkillRegistry {
       parameters: [],
       handler: '',
       examples: [],
-      sourceFile: filePath
+      sourceFile: filePath,
     };
 
     // 解析 YAML Frontmatter
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (frontmatterMatch) {
       const yaml = frontmatterMatch[1];
-      
+
       // 解析基本字段
       const idMatch = yaml.match(/id:\s*(.+)/);
       const nameMatch = yaml.match(/name:\s*(.+)/);
@@ -136,11 +138,21 @@ class SkillRegistry {
       const descMatch = yaml.match(/description:\s*(.+)/);
       const handlerMatch = yaml.match(/handler:\s*(.+)/);
 
-      if (idMatch) skill.id = idMatch[1].trim();
-      if (nameMatch) skill.name = nameMatch[1].trim();
-      if (commandMatch) skill.command = commandMatch[1].trim();
-      if (descMatch) skill.description = descMatch[1].trim();
-      if (handlerMatch) skill.handler = handlerMatch[1].trim();
+      if (idMatch) {
+        skill.id = idMatch[1].trim();
+      }
+      if (nameMatch) {
+        skill.name = nameMatch[1].trim();
+      }
+      if (commandMatch) {
+        skill.command = commandMatch[1].trim();
+      }
+      if (descMatch) {
+        skill.description = descMatch[1].trim();
+      }
+      if (handlerMatch) {
+        skill.handler = handlerMatch[1].trim();
+      }
 
       // 解析 patterns
       const patternsMatch = yaml.match(/patterns:\s*\n((?:\s+-\s*.+\n?)+)/);
@@ -156,10 +168,16 @@ class SkillRegistry {
     const paramSection = content.match(/## 参数\s*\n\n([\s\S]*?)(?=\n##|$)/);
     if (paramSection) {
       const tableContent = paramSection[1];
-      const rows = tableContent.split('\n').filter(line => line.startsWith('|') && !line.includes('---'));
-      
-      for (const row of rows.slice(1)) { // 跳过表头
-        const cells = row.split('|').map(c => c.trim()).filter(Boolean);
+      const rows = tableContent
+        .split('\n')
+        .filter(line => line.startsWith('|') && !line.includes('---'));
+
+      for (const row of rows.slice(1)) {
+        // 跳过表头
+        const cells = row
+          .split('|')
+          .map(c => c.trim())
+          .filter(Boolean);
         if (cells.length >= 4) {
           const [name, type, required, description] = cells;
           const param = {
@@ -167,14 +185,14 @@ class SkillRegistry {
             type: type.toLowerCase(),
             required: required === '是',
             description,
-            default: this._parseDefaultValue(cells[4])
+            default: this._parseDefaultValue(cells[4]),
           };
-          
+
           // 解析枚举值
           if (param.type === 'enum' && cells[5]) {
             param.enum = cells[5].split(',').map(s => s.trim());
           }
-          
+
           skill.parameters.push(param);
         }
       }
@@ -190,7 +208,7 @@ class SkillRegistry {
           const codeMatch = ex.match(/```\n?([\s\S]*?)```/);
           return {
             title: titleMatch?.[1] || '',
-            code: codeMatch?.[1]?.trim() || ''
+            code: codeMatch?.[1]?.trim() || '',
           };
         });
       }
@@ -211,10 +229,18 @@ class SkillRegistry {
    * @returns {*}
    */
   _parseDefaultValue(value) {
-    if (!value) return undefined;
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    if (!isNaN(Number(value))) return Number(value);
+    if (!value) {
+      return undefined;
+    }
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    if (!isNaN(Number(value))) {
+      return Number(value);
+    }
     return value;
   }
 
@@ -225,7 +251,7 @@ class SkillRegistry {
   register(skill) {
     this.skills.set(skill.id, skill);
     this.commandMap.set(skill.command, skill.id);
-    
+
     // 同时注册别名（去掉斜杠）
     const alias = skill.command.replace(/^\//, '');
     if (alias !== skill.command) {
@@ -268,20 +294,20 @@ class SkillRegistry {
   match(input) {
     // 1. 精确匹配命令
     const trimmed = input.trim();
-    
+
     // 提取命令和参数
     const commandMatch = trimmed.match(/^(\/[\w-]+)(?:\s+(.*))?$/);
     if (commandMatch) {
       const [, command, argsStr] = commandMatch;
       const skill = this.getByCommand(command);
-      
+
       if (skill) {
         const args = this._parseArguments(argsStr || '', skill);
         return {
           skill,
           command,
           arguments: args,
-          confidence: 1.0
+          confidence: 1.0,
         };
       }
     }
@@ -299,7 +325,7 @@ class SkillRegistry {
               command: skill.command,
               arguments: args,
               confidence: 0.8,
-              matchedPattern: pattern
+              matchedPattern: pattern,
             };
           }
         } catch (e) {
@@ -319,20 +345,23 @@ class SkillRegistry {
    */
   _parseArguments(argsStr, skill) {
     const args = {};
-    
+
     // 解析 --key value 或 --key=value 格式
     const paramRegex = /--([\w-]+)(?:\s+|=)([^\s-][^\s]*|"[^"]*"|'[^']*')/g;
     let match;
-    
+
     while ((match = paramRegex.exec(argsStr)) !== null) {
       const [, key, value] = match;
-      args[key] = this._convertType(value.replace(/^["']|["']$/g, ''), skill.parameters.find(p => p.name === key)?.type);
+      args[key] = this._convertType(
+        value.replace(/^["']|["']$/g, ''),
+        skill.parameters.find(p => p.name === key)?.type
+      );
     }
 
     // 解析位置参数
     const positional = argsStr.replace(paramRegex, '').trim().split(/\s+/).filter(Boolean);
     const positionalParams = skill.parameters.filter(p => !p.name.startsWith('--'));
-    
+
     positional.forEach((value, index) => {
       if (positionalParams[index]) {
         args[positionalParams[index].name] = this._convertType(value, positionalParams[index].type);
@@ -357,7 +386,7 @@ class SkillRegistry {
    */
   _extractArgsFromMatch(match, skill) {
     const args = {};
-    
+
     // 使用命名捕获组
     if (match.groups) {
       Object.entries(match.groups).forEach(([key, value]) => {
@@ -384,9 +413,15 @@ class SkillRegistry {
    * @returns {*}
    */
   _convertType(value, type) {
-    if (!type || type === 'string') return value;
-    if (type === 'number') return Number(value);
-    if (type === 'boolean') return value === 'true' || value === true;
+    if (!type || type === 'string') {
+      return value;
+    }
+    if (type === 'number') {
+      return Number(value);
+    }
+    if (type === 'boolean') {
+      return value === 'true' || value === true;
+    }
     return value;
   }
 
@@ -409,7 +444,9 @@ class SkillRegistry {
         continue;
       }
 
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
 
       // 类型检查
       if (param.type === 'number' && isNaN(Number(value))) {
@@ -429,7 +466,7 @@ class SkillRegistry {
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
@@ -440,12 +477,14 @@ class SkillRegistry {
    */
   getHelp(skillId) {
     const skill = this.get(skillId);
-    if (!skill) return `未找到 Skill: ${skillId}`;
+    if (!skill) {
+      return `未找到 Skill: ${skillId}`;
+    }
 
     let help = `## ${skill.name}\n\n`;
     help += `${skill.description}\n\n`;
     help += `**用法:** \`${skill.command}`;
-    
+
     for (const param of skill.parameters) {
       if (param.required) {
         help += ` --${param.name} <${param.type}>`;

@@ -3,8 +3,8 @@
  * Manages parallel execution of tasks with concurrency control
  */
 
+import { ErrorCodes, OrchestrationError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
-import { OrchestrationError, ErrorCodes } from '../utils/errors.js';
 
 const logger = new Logger('ParallelRunner');
 
@@ -51,7 +51,9 @@ export class ParallelRunner {
       onBatchComplete = null,
     } = options;
 
-    logger.info(`Starting parallel execution of ${tasks.length} tasks (max concurrency: ${this.maxConcurrency})`);
+    logger.info(
+      `Starting parallel execution of ${tasks.length} tasks (max concurrency: ${this.maxConcurrency})`
+    );
 
     const results = {
       tasks: new Map(),
@@ -77,7 +79,8 @@ export class ParallelRunner {
 
       if (readyTasks.length === 0) {
         // Check for deadlock
-        const pendingCount = tasks.length - results.stats.completed - results.stats.failed - results.stats.skipped;
+        const pendingCount =
+          tasks.length - results.stats.completed - results.stats.failed - results.stats.skipped;
         if (pendingCount > 0) {
           logger.error('Deadlock detected - no ready tasks but pending tasks remain');
           break;
@@ -129,7 +132,9 @@ export class ParallelRunner {
     results.stats.duration = results.stats.endTime - results.stats.startTime;
     results.stats.success = results.stats.failed === 0;
 
-    logger.info(`Parallel execution complete: ${results.stats.completed}/${results.stats.total} completed, ${results.stats.failed} failed`);
+    logger.info(
+      `Parallel execution complete: ${results.stats.completed}/${results.stats.total} completed, ${results.stats.failed} failed`
+    );
 
     return results;
   }
@@ -173,9 +178,11 @@ export class ParallelRunner {
   _getReadyTasks(graph, results) {
     const readyTasks = [];
 
-    for (const [taskId, node] of graph) {
+    for (const [, node] of graph) {
       // Skip if already processed
-      if (node.status !== ExecutionStatus.PENDING) continue;
+      if (node.status !== ExecutionStatus.PENDING) {
+        continue;
+      }
 
       // Check if all dependencies are completed
       let allDepsCompleted = true;
@@ -205,7 +212,7 @@ export class ParallelRunner {
   async _executeBatch(tasks, executor, callbacks) {
     const { onTaskStart, onTaskComplete, onTaskError } = callbacks;
 
-    const promises = tasks.map(async (task) => {
+    const promises = tasks.map(async task => {
       const startTime = Date.now();
       let result;
       let attempts = 0;
@@ -237,9 +244,10 @@ export class ParallelRunner {
             duration: endTime - startTime,
             attempts,
           };
-
         } catch (error) {
-          logger.warn(`Task ${task.id} failed (attempt ${attempts}/${maxAttempts}): ${error.message}`);
+          logger.warn(
+            `Task ${task.id} failed (attempt ${attempts}/${maxAttempts}): ${error.message}`
+          );
 
           if (attempts < maxAttempts) {
             // Wait before retry
@@ -277,23 +285,27 @@ export class ParallelRunner {
    * @returns {Promise} Execution result
    */
   async _executeWithTimeout(executor, task, timeout) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new OrchestrationError(
-          `Task ${task.id} timed out after ${timeout}ms`,
-          ErrorCodes.TASK_EXECUTION_FAILED,
-          { taskId: task.id, timeout }
-        ));
+        reject(
+          new OrchestrationError(
+            `Task ${task.id} timed out after ${timeout}ms`,
+            ErrorCodes.TASK_EXECUTION_FAILED,
+            { taskId: task.id, timeout }
+          )
+        );
       }, timeout);
 
-      try {
-        const result = await executor(task);
-        clearTimeout(timeoutId);
-        resolve(result);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
+      (async () => {
+        try {
+          const result = await executor(task);
+          clearTimeout(timeoutId);
+          resolve(result);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      })();
     });
   }
 
@@ -332,21 +344,19 @@ export class ParallelRunner {
   getStats(results) {
     const taskResults = Array.from(results.tasks.values());
 
-    const durations = taskResults
-      .filter(r => r.duration)
-      .map(r => r.duration);
+    const durations = taskResults.filter(r => r.duration).map(r => r.duration);
 
     return {
       ...results.stats,
-      averageDuration: durations.length > 0
-        ? durations.reduce((a, b) => a + b, 0) / durations.length
-        : 0,
+      averageDuration:
+        durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0,
       maxDuration: Math.max(...durations, 0),
       minDuration: Math.min(...durations, Infinity),
       batchCount: results.batches.length,
-      successRate: results.stats.total > 0
-        ? (results.stats.completed / results.stats.total * 100).toFixed(1) + '%'
-        : 'N/A',
+      successRate:
+        results.stats.total > 0
+          ? `${((results.stats.completed / results.stats.total) * 100).toFixed(1)}%`
+          : 'N/A',
     };
   }
 }

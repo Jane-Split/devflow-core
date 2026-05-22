@@ -4,9 +4,6 @@
  */
 
 import { BaseToolAdapter, ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('WindsurfAdapter');
 
 /**
  * Windsurf Tool Adapter
@@ -79,11 +76,8 @@ export class WindsurfAdapter extends BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {string} Subagent command
    */
-  buildSubagentCommand(task, options = {}) {
-    const {
-      agentType = 'general_purpose_task',
-      description = task.title || task.name,
-    } = options;
+  buildSubagentCommand(task, _options = {}) {
+    const { description = task.title || task.name } = _options;
 
     // Windsurf uses @cascade for flow-based execution
     return `@cascade run "${description}"`;
@@ -95,12 +89,7 @@ export class WindsurfAdapter extends BaseToolAdapter {
    * @returns {string} Cascade prompt
    */
   buildCascadePrompt(workflow) {
-    const lines = [
-      '# Cascade Flow',
-      '',
-      'Execute the following workflow:',
-      '',
-    ];
+    const lines = ['# Cascade Flow', '', 'Execute the following workflow:', ''];
 
     for (const step of workflow.steps || []) {
       lines.push(`## Step: ${step.name}`);

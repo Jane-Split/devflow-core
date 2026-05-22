@@ -5,7 +5,6 @@
 
 import { join } from 'path';
 import fs from 'fs-extra';
-import glob from 'glob';
 import { AnalysisError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
@@ -105,12 +104,9 @@ export class FrontendAnalyzer {
    */
   async _loadPackageJson() {
     const packagePath = join(this.projectRoot, 'package.json');
-    
+
     if (!(await fs.pathExists(packagePath))) {
-      throw new AnalysisError(
-        'package.json not found',
-        ErrorCodes.PROJECT_TYPE_UNKNOWN
-      );
+      throw new AnalysisError('package.json not found', ErrorCodes.PROJECT_TYPE_UNKNOWN);
     }
 
     this.packageJson = await fs.readJson(packagePath);
@@ -208,7 +204,9 @@ export class FrontendAnalyzer {
     if (await fs.pathExists(srcDir)) {
       try {
         const files = await fs.readdir(srcDir, { recursive: true });
-        const hasCssModules = files.some(f => f.endsWith('.module.css') || f.endsWith('.module.scss'));
+        const hasCssModules = files.some(
+          f => f.endsWith('.module.css') || f.endsWith('.module.scss')
+        );
         if (hasCssModules) {
           styling.hasCssModules = true;
         }
@@ -242,9 +240,9 @@ export class FrontendAnalyzer {
             key,
             version: deps[indicator],
           };
-          
+
           stateManagement.libraries.push(libInfo);
-          
+
           if (!stateManagement.primary) {
             stateManagement.primary = libInfo;
           }
@@ -370,7 +368,11 @@ export class FrontendAnalyzer {
       testing.frameworks.push({ name: 'Vitest', version: deps.vitest });
     }
 
-    if (deps['@testing-library/react'] || deps['@testing-library/vue'] || deps['@testing-library/angular']) {
+    if (
+      deps['@testing-library/react'] ||
+      deps['@testing-library/vue'] ||
+      deps['@testing-library/angular']
+    ) {
       testing.frameworks.push({ name: 'Testing Library', version: deps['@testing-library/react'] });
     }
 
@@ -404,7 +406,7 @@ export class FrontendAnalyzer {
 
     try {
       const entries = await fs.readdir(srcDir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           conventions.folderStructure.push(entry.name);
@@ -413,7 +415,7 @@ export class FrontendAnalyzer {
 
       // Detect naming conventions from files
       const allFiles = await fs.readdir(srcDir, { recursive: true });
-      
+
       const hasPascalCase = allFiles.some(f => /^[A-Z][a-zA-Z0-9]*\.(jsx?|tsx?|vue)$/.test(f));
       const hasKebabCase = allFiles.some(f => /^[a-z0-9]+(-[a-z0-9]+)*\.(jsx?|tsx?|vue)$/.test(f));
 

@@ -131,12 +131,7 @@ export class LearningEngine {
   async suggestPatterns(task) {
     logger.debug(`Getting pattern suggestions for task: ${task.title}`);
 
-    const searchContext = [
-      task.title,
-      task.description,
-      task.type,
-      ...(task.tags || []),
-    ].join(' ');
+    const searchContext = [task.title, task.description, task.type, ...(task.tags || [])].join(' ');
 
     const results = await this.memoryManager.findSimilarPatterns(searchContext, {
       limit: 5,
@@ -156,12 +151,7 @@ export class LearningEngine {
   async getRelevantPitfalls(task) {
     logger.debug(`Getting pitfall warnings for task: ${task.title}`);
 
-    const searchContext = [
-      task.title,
-      task.description,
-      task.type,
-      ...(task.tags || []),
-    ].join(' ');
+    const searchContext = [task.title, task.description, task.type, ...(task.tags || [])].join(' ');
 
     const results = await this.memoryManager.findRelevantPitfalls(searchContext, {
       limit: 5,
@@ -178,7 +168,7 @@ export class LearningEngine {
    * @param {Object} execution - Execution data
    */
   async learnFromExecution(execution) {
-    const { task, result, duration, errors } = execution;
+    const { task, result, errors } = execution;
 
     // Record patterns from successful executions
     if (result?.success && task) {
@@ -238,10 +228,12 @@ export class LearningEngine {
    * Infer severity from error
    */
   _inferSeverity(error) {
-    if (error.severity) return error.severity;
+    if (error.severity) {
+      return error.severity;
+    }
 
     const message = String(error.message || error).toLowerCase();
-    
+
     if (message.includes('fatal') || message.includes('critical')) {
       return 'critical';
     }
@@ -281,7 +273,7 @@ export class LearningEngine {
     const pitfalls = this.patternCache.get('pitfalls') || [];
 
     const categoryStats = {};
-    
+
     for (const pattern of patterns) {
       categoryStats[pattern.category] = (categoryStats[pattern.category] || 0) + 1;
     }

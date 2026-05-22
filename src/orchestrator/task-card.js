@@ -34,48 +34,48 @@ export const TaskType = {
  */
 export const TASK_CARD_TEMPLATE = {
   // Required fields
-  id: '',                    // Unique identifier (e.g., "TASK-001")
-  title: '',                 // Short title
+  id: '', // Unique identifier (e.g., "TASK-001")
+  title: '', // Short title
   type: TaskType.IMPLEMENTATION, // Task type
-  
+
   // Description
-  description: '',           // Detailed description
-  acceptanceCriteria: [],     // Array of acceptance criteria
-  
+  description: '', // Detailed description
+  acceptanceCriteria: [], // Array of acceptance criteria
+
   // Dependencies
-  dependsOn: [],             // Array of task IDs this depends on
-  
+  dependsOn: [], // Array of task IDs this depends on
+
   // Assignment
-  assignee: null,           // Assigned developer/agent
+  assignee: null, // Assigned developer/agent
   priority: TaskPriority.MEDIUM,
-  
+
   // Estimate
   estimatedHours: null,
   actualHours: null,
-  
+
   // Status tracking
-  status: 'pending',         // pending | in_progress | completed | blocked
-  blockedBy: [],            // Tasks blocking this one
-  
+  status: 'pending', // pending | in_progress | completed | blocked
+  blockedBy: [], // Tasks blocking this one
+
   // Metadata
-  tags: [],                 // Array of tags for categorization
-  labels: [],               // Labels for filtering
-  
+  tags: [], // Array of tags for categorization
+  labels: [], // Labels for filtering
+
   // Context
   context: {
-    projectType: null,      // frontend | backend | fullstack | microservice
-    files: [],              // Files to modify/create
-    modules: [],            // Modules involved
-    testCoverage: null,     // Required test coverage percentage
+    projectType: null, // frontend | backend | fullstack | microservice
+    files: [], // Files to modify/create
+    modules: [], // Modules involved
+    testCoverage: null, // Required test coverage percentage
   },
-  
+
   // Results
   output: {
-    files: [],              // Files created/modified
-    tests: [],              // Tests created
-    docs: [],               // Documentation created
+    files: [], // Files created/modified
+    tests: [], // Tests created
+    docs: [], // Documentation created
   },
-  
+
   // Timestamps
   createdAt: null,
   updatedAt: null,
@@ -168,7 +168,7 @@ export function validateTaskCard(taskCard) {
 export function parseTaskCardsFromMarkdown(markdown) {
   const taskCards = [];
   const taskRegex = /```task\s*\n([\s\S]*?)```/g;
-  
+
   let match;
   while ((match = taskRegex.exec(markdown)) !== null) {
     try {
@@ -192,13 +192,13 @@ export function parseTaskCardsFromMarkdown(markdown) {
 function parseStructuredTask(content) {
   const task = {};
   const lines = content.split('\n');
-  
+
   for (const line of lines) {
     const colonIndex = line.indexOf(':');
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim().toLowerCase().replace(/\s+/g, '');
       const value = line.slice(colonIndex + 1).trim();
-      
+
       switch (key) {
         case 'id':
         case 'title':
@@ -211,11 +211,17 @@ function parseStructuredTask(content) {
           break;
         case 'depends':
         case 'dependson':
-          task.dependsOn = value.split(',').map(s => s.trim()).filter(Boolean);
+          task.dependsOn = value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
           break;
         case 'tags':
         case 'labels':
-          task[key === 'labels' ? 'labels' : 'tags'] = value.split(',').map(s => s.trim()).filter(Boolean);
+          task[key === 'labels' ? 'labels' : 'tags'] = value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
           break;
       }
     }
@@ -264,15 +270,17 @@ function escapeJsonString(str) {
  */
 export function splitTask(taskCard, numSubtasks) {
   const subtasks = [];
-  
+
   for (let i = 0; i < numSubtasks; i++) {
-    subtasks.push(createTaskCard({
-      ...taskCard,
-      id: `${taskCard.id}-SUB${i + 1}`,
-      title: `${taskCard.title} (Part ${i + 1})`,
-      parentId: taskCard.id,
-      dependsOn: i > 0 ? [`${taskCard.id}-SUB${i}`] : taskCard.dependsOn,
-    }));
+    subtasks.push(
+      createTaskCard({
+        ...taskCard,
+        id: `${taskCard.id}-SUB${i + 1}`,
+        title: `${taskCard.title} (Part ${i + 1})`,
+        parentId: taskCard.id,
+        dependsOn: i > 0 ? [`${taskCard.id}-SUB${i}`] : taskCard.dependsOn,
+      })
+    );
   }
 
   return subtasks;

@@ -4,9 +4,6 @@
  */
 
 import { BaseToolAdapter, ToolCapability } from './base.js';
-import { Logger } from '../utils/logger.js';
-
-const logger = new Logger('CopilotAdapter');
 
 /**
  * GitHub Copilot Tool Adapter
@@ -18,9 +15,7 @@ export class CopilotAdapter extends BaseToolAdapter {
     this.name = 'copilot';
     this.displayName = 'GitHub Copilot';
     this.contextLimit = 8000; // Copilot has smaller context
-    this.capabilities = [
-      ToolCapability.MULTI_FILE,
-    ];
+    this.capabilities = [ToolCapability.MULTI_FILE];
   }
 
   /**
@@ -38,7 +33,7 @@ export class CopilotAdapter extends BaseToolAdapter {
    * @param {Object} context - Task context
    * @returns {string} Generated prompt
    */
-  buildPrompt(task, context = {}) {
+  buildPrompt(task, _context = {}) {
     const lines = [];
 
     // Copilot prompt must be very concise
@@ -86,7 +81,7 @@ export class CopilotAdapter extends BaseToolAdapter {
    * @param {Object} options - Options
    * @returns {null} Always null
    */
-  buildSubagentCommand(task, options = {}) {
+  buildSubagentCommand(_task, _options = {}) {
     // Copilot doesn't support subagent
     return null;
   }
@@ -101,7 +96,9 @@ export class CopilotAdapter extends BaseToolAdapter {
 
     if (spec.methods) {
       for (const method of spec.methods) {
-        lines.push(`// ${method.name}(${method.params?.join(', ') || ''}): ${method.returnType || 'void'}`);
+        lines.push(
+          `// ${method.name}(${method.params?.join(', ') || ''}): ${method.returnType || 'void'}`
+        );
       }
     }
 

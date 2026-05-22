@@ -6,7 +6,6 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import { ToolAdapterError, ErrorCodes } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('ToolDetector');
@@ -60,25 +59,19 @@ const TOOL_SIGNATURES = {
     files: ['.clinerules', 'cline.md'],
     dirs: ['.cline'],
     envVars: [],
-    configPaths: [
-      join(homedir(), '.vscode', 'extensions', 'saoudrizwan.claude-dev'),
-    ],
+    configPaths: [join(homedir(), '.vscode', 'extensions', 'saoudrizwan.claude-dev')],
   },
   [SupportedTools.ROO]: {
     files: ['.roorules', 'roo.md'],
     dirs: ['.roo'],
     envVars: [],
-    configPaths: [
-      join(homedir(), '.vscode', 'extensions', 'rooveterinaryinc.roo-cline'),
-    ],
+    configPaths: [join(homedir(), '.vscode', 'extensions', 'rooveterinaryinc.roo-cline')],
   },
   [SupportedTools.COPILOT]: {
     files: [],
     dirs: [],
     envVars: ['GITHUB_COPILOT_TOKEN', 'COPILOT_TOKEN'],
-    configPaths: [
-      join(homedir(), '.config', 'github-copilot'),
-    ],
+    configPaths: [join(homedir(), '.config', 'github-copilot')],
   },
 };
 

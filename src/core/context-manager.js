@@ -6,7 +6,6 @@
 
 import { Logger } from '../utils/logger.js';
 import { MemoryManager } from '../memory/manager.js';
-import { VectorIndex } from '../memory/vector-index.js';
 
 const logger = new Logger('ContextManager');
 
@@ -14,8 +13,8 @@ const logger = new Logger('ContextManager');
  * Context layer types
  */
 export const ContextLayer = {
-  GLOBAL: 'global',       // ~10% of token budget
-  TASK: 'task',           // ~60% of token budget
+  GLOBAL: 'global', // ~10% of token budget
+  TASK: 'task', // ~60% of token budget
   RETRIEVAL: 'retrieval', // ~30% of token budget
 };
 
@@ -23,9 +22,9 @@ export const ContextLayer = {
  * Context budget allocation
  */
 export const CONTEXT_BUDGET = {
-  [ContextLayer.GLOBAL]: 0.10,     // 10%
-  [ContextLayer.TASK]: 0.60,       // 60%
-  [ContextLayer.RETRIEVAL]: 0.30,  // 30%
+  [ContextLayer.GLOBAL]: 0.1, // 10%
+  [ContextLayer.TASK]: 0.6, // 60%
+  [ContextLayer.RETRIEVAL]: 0.3, // 30%
 };
 
 /**
@@ -68,10 +67,7 @@ export class ContextManager {
   async buildContext(task, options = {}) {
     await this.initialize();
 
-    const {
-      maxFiles = 10,
-      maxTokens = this.contextLimit,
-    } = options;
+    const { maxTokens = this.contextLimit } = options;
 
     // Calculate token budgets for each layer
     const budgets = this._calculateBudgets(maxTokens);
@@ -79,7 +75,10 @@ export class ContextManager {
     // Build each layer
     const globalContext = await this._buildGlobalContext(budgets[ContextLayer.GLOBAL]);
     const taskContext = await this._buildTaskContext(task, budgets[ContextLayer.TASK]);
-    const retrievalContext = await this._buildRetrievalContext(task, budgets[ContextLayer.RETRIEVAL]);
+    const retrievalContext = await this._buildRetrievalContext(
+      task,
+      budgets[ContextLayer.RETRIEVAL]
+    );
 
     return {
       global: globalContext,
@@ -129,7 +128,6 @@ export class ContextManager {
         context.conventions = profile.content.conventions;
         context.tokens += this._estimateTokens(JSON.stringify(context.conventions));
       }
-
     } catch (error) {
       logger.warn(`Failed to build global context: ${error.message}`);
     }
@@ -186,7 +184,6 @@ export class ContextManager {
       const remainingBudget = budget - context.tokens;
       context.codeFiles = await this.selectRelevantCode(task, 10, remainingBudget);
       context.tokens += this._estimateTokens(JSON.stringify(context.codeFiles));
-
     } catch (error) {
       logger.warn(`Failed to build task context: ${error.message}`);
     }
@@ -200,7 +197,7 @@ export class ContextManager {
    * @param {number} budget - Token budget
    * @returns {Promise<Object>} Retrieval context
    */
-  async _buildRetrievalContext(task, budget) {
+  async _buildRetrievalContext(task, _budget) {
     const context = {
       patterns: [],
       pitfalls: [],
@@ -210,30 +207,39 @@ export class ContextManager {
 
     try {
       // Find similar patterns
-      const patterns = await this.memoryManager.findSimilarPatterns(task.description || task.title, {
-        limit: 5,
-      });
+      const patterns = await this.memoryManager.findSimilarPatterns(
+        task.description || task.title,
+        {
+          limit: 5,
+        }
+      );
 
-      context.patterns = patterns.map(p => ({
-        name: p.entry?.content?.name,
-        description: p.entry?.content?.description,
-        score: p.score,
-      })).slice(0, 3);
+      context.patterns = patterns
+        .map(p => ({
+          name: p.entry?.content?.name,
+          description: p.entry?.content?.description,
+          score: p.score,
+        }))
+        .slice(0, 3);
       context.tokens += this._estimateTokens(JSON.stringify(context.patterns));
 
       // Find relevant pitfalls
-      const pitfalls = await this.memoryManager.findRelevantPitfalls(task.description || task.title, {
-        limit: 5,
-      });
+      const pitfalls = await this.memoryManager.findRelevantPitfalls(
+        task.description || task.title,
+        {
+          limit: 5,
+        }
+      );
 
-      context.pitfalls = pitfalls.map(p => ({
-        name: p.entry?.content?.name,
-        symptom: p.entry?.content?.symptom,
-        solution: p.entry?.content?.solution,
-        score: p.score,
-      })).slice(0, 3);
+      context.pitfalls = pitfalls
+        .map(p => ({
+          name: p.entry?.content?.name,
+          symptom: p.entry?.content?.symptom,
+          solution: p.entry?.content?.solution,
+          score: p.score,
+        }))
+        .slice(0, 3);
       context.tokens += this._estimateTokens(JSON.stringify(context.pitfalls));
-
     } catch (error) {
       logger.warn(`Failed to build retrieval context: ${error.message}`);
     }
@@ -257,8 +263,12 @@ export class ContextManager {
       // 1. Direct dependencies (must include)
       const directDeps = this._getDirectDependencies(task);
       for (const file of directDeps) {
-        if (selectedFiles.length >= maxFiles) break;
-        if (currentTokens >= maxTokens) break;
+        if (selectedFiles.length >= maxFiles) {
+          break;
+        }
+        if (currentTokens >= maxTokens) {
+          break;
+        }
 
         selectedFiles.push({
           path: file.path,
@@ -270,13 +280,22 @@ export class ContextManager {
       }
 
       // 2. Semantic matches from vector search
-      const semanticMatches = await this._semanticSearch(task.description || task.title, maxFiles * 2);
+      const semanticMatches = await this._semanticSearch(
+        task.description || task.title,
+        maxFiles * 2
+      );
       for (const match of semanticMatches) {
-        if (selectedFiles.length >= maxFiles) break;
-        if (currentTokens >= maxTokens) break;
+        if (selectedFiles.length >= maxFiles) {
+          break;
+        }
+        if (currentTokens >= maxTokens) {
+          break;
+        }
 
         // Skip if already included
-        if (selectedFiles.some(f => f.path === match.path)) continue;
+        if (selectedFiles.some(f => f.path === match.path)) {
+          continue;
+        }
 
         selectedFiles.push({
           path: match.path,
@@ -291,11 +310,17 @@ export class ContextManager {
       // 3. Call graph analysis (if available)
       const callGraphFiles = await this._analyzeCallGraph(task);
       for (const file of callGraphFiles) {
-        if (selectedFiles.length >= maxFiles) break;
-        if (currentTokens >= maxTokens) break;
+        if (selectedFiles.length >= maxFiles) {
+          break;
+        }
+        if (currentTokens >= maxTokens) {
+          break;
+        }
 
         // Skip if already included
-        if (selectedFiles.some(f => f.path === file.path)) continue;
+        if (selectedFiles.some(f => f.path === file.path)) {
+          continue;
+        }
 
         selectedFiles.push({
           path: file.path,
@@ -308,7 +333,6 @@ export class ContextManager {
 
       // Sort by priority
       selectedFiles.sort((a, b) => a.priority - b.priority);
-
     } catch (error) {
       logger.warn(`Failed to select relevant code: ${error.message}`);
     }
@@ -356,7 +380,9 @@ export class ContextManager {
    * @returns {Promise<Array>} Search results
    */
   async _semanticSearch(query, limit = 20) {
-    if (!this.memoryManager) return [];
+    if (!this.memoryManager) {
+      return [];
+    }
 
     try {
       const results = await this.memoryManager.search(query, {
@@ -401,14 +427,13 @@ export class ContextManager {
         const fileInfo = callGraph.get(path);
         if (fileInfo) {
           relatedFiles.push({
-            path: path,
+            path,
             summary: this._generateFileSummary(fileInfo),
             reason: 'call-graph',
             priority: 3,
           });
         }
       }
-
     } catch (error) {
       logger.warn(`Call graph analysis failed: ${error.message}`);
     }
@@ -460,7 +485,9 @@ export class ContextManager {
     while (queue.length > 0) {
       const filePath = queue.shift();
 
-      if (visited.has(filePath)) continue;
+      if (visited.has(filePath)) {
+        continue;
+      }
       visited.add(filePath);
 
       try {
@@ -531,7 +558,8 @@ export class ContextManager {
    */
   _parseJavaScript(content, fileInfo, filePath) {
     // Extract ES6 imports
-    const importRegex = /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"];?/g;
+    const importRegex =
+      /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"];?/g;
     let match;
     while ((match = importRegex.exec(content)) !== null) {
       const importPath = this._resolveImportPath(match[1], filePath);
@@ -582,7 +610,7 @@ export class ContextManager {
    * @param {Object} fileInfo - File info object
    * @param {string} filePath - File path
    */
-  _parsePython(content, fileInfo, filePath) {
+  _parsePython(content, fileInfo, _filePath) {
     // Extract imports
     const importRegex = /^(?:from\s+(\S+)\s+import|import\s+(\S+))/gm;
     let match;
@@ -612,7 +640,7 @@ export class ContextManager {
    * @param {Object} fileInfo - File info object
    * @param {string} filePath - File path
    */
-  _parseJava(content, fileInfo, filePath) {
+  _parseJava(content, fileInfo, _filePath) {
     // Extract imports
     const importRegex = /^import\s+([\w.]+);/gm;
     let match;
@@ -685,11 +713,15 @@ export class ContextManager {
     while (queue.length > 0) {
       const path = queue.shift();
 
-      if (visited.has(path)) continue;
+      if (visited.has(path)) {
+        continue;
+      }
       visited.add(path);
 
       const fileInfo = callGraph.get(path);
-      if (!fileInfo) continue;
+      if (!fileInfo) {
+        continue;
+      }
 
       // Add to related
       related.add(path);
@@ -702,7 +734,9 @@ export class ContextManager {
       }
 
       // Limit to prevent explosion
-      if (related.size >= 20) break;
+      if (related.size >= 20) {
+        break;
+      }
     }
 
     return [...related];
@@ -757,20 +791,24 @@ export class ContextManager {
    * @returns {*} Truncated content
    */
   _truncateToBudget(content, budget) {
-    if (!content) return content;
+    if (!content) {
+      return content;
+    }
 
     const str = typeof content === 'string' ? content : JSON.stringify(content);
     const tokens = this._estimateTokens(str);
 
-    if (tokens <= budget) return content;
+    if (tokens <= budget) {
+      return content;
+    }
 
     // Truncate string
     const charLimit = budget * 4; // ~4 chars per token
     const truncated = str.slice(0, charLimit);
 
     return typeof content === 'string'
-      ? truncated + '... [truncated]'
-      : JSON.parse(truncated + '... [truncated]');
+      ? `${truncated}... [truncated]`
+      : JSON.parse(`${truncated}... [truncated]`);
   }
 
   /**
@@ -779,7 +817,9 @@ export class ContextManager {
    * @returns {number} Estimated token count
    */
   _estimateTokens(text) {
-    if (!text) return 0;
+    if (!text) {
+      return 0;
+    }
 
     const str = typeof text === 'string' ? text : JSON.stringify(text);
 

@@ -127,13 +127,13 @@ export class ComplexityEvaluator {
     const typeEstimates = {
       'api-endpoint': 50,
       'ui-component': 80,
-      'page': 150,
-      'service': 100,
-      'utility': 30,
-      'test': 40,
-      'refactor': 100,
-      'bugfix': 20,
-      'implementation': 100,
+      page: 150,
+      service: 100,
+      utility: 30,
+      test: 40,
+      refactor: 100,
+      bugfix: 20,
+      implementation: 100,
     };
 
     estimatedLOC = typeEstimates[task.type] || 50;
@@ -240,15 +240,21 @@ export class ComplexityEvaluator {
     let lowCount = 0;
 
     for (const indicator of BUSINESS_LOGIC_INDICATORS.high) {
-      if (combined.includes(indicator)) highCount++;
+      if (combined.includes(indicator)) {
+        highCount++;
+      }
     }
 
     for (const indicator of BUSINESS_LOGIC_INDICATORS.medium) {
-      if (combined.includes(indicator)) mediumCount++;
+      if (combined.includes(indicator)) {
+        mediumCount++;
+      }
     }
 
     for (const indicator of BUSINESS_LOGIC_INDICATORS.low) {
-      if (combined.includes(indicator)) lowCount++;
+      if (combined.includes(indicator)) {
+        lowCount++;
+      }
     }
 
     // Determine level
@@ -274,7 +280,7 @@ export class ComplexityEvaluator {
    * @param {Object} projectProfile - Project profile
    * @returns {Object} Risk evaluation
    */
-  _evaluateRisk(task, projectProfile) {
+  _evaluateRisk(task, _projectProfile) {
     const riskFactors = [];
 
     // Check for high-risk patterns
@@ -347,8 +353,12 @@ export class ComplexityEvaluator {
     const uniqueLevels = new Set(levels).size;
 
     // More agreement = higher confidence
-    if (uniqueLevels === 1) return 0.9;
-    if (uniqueLevels === 2) return 0.7;
+    if (uniqueLevels === 1) {
+      return 0.9;
+    }
+    if (uniqueLevels === 2) {
+      return 0.7;
+    }
     return 0.5;
   }
 
@@ -366,7 +376,7 @@ export class ComplexityEvaluator {
       suggestions.push('Review dependencies before starting');
 
       if (dimensions.risk.factors.length > 0) {
-        suggestions.push('Pay attention to risk factors: ' + dimensions.risk.factors.join(', '));
+        suggestions.push(`Pay attention to risk factors: ${dimensions.risk.factors.join(', ')}`);
       }
     }
 
@@ -413,18 +423,16 @@ export class ComplexityEvaluator {
 
     let totalConfidence = 0;
 
-    for (const eval of evaluations) {
-      stats.byLevel[eval.level]++;
-      totalConfidence += eval.confidence;
+    for (const evaluation of evaluations) {
+      stats.byLevel[evaluation.level]++;
+      totalConfidence += evaluation.confidence;
 
-      if (eval.level === ComplexityLevel.HIGH) {
-        stats.highComplexityTasks.push(eval.taskId);
+      if (evaluation.level === ComplexityLevel.HIGH) {
+        stats.highComplexityTasks.push(evaluation.taskId);
       }
     }
 
-    stats.averageConfidence = evaluations.length > 0
-      ? totalConfidence / evaluations.length
-      : 0;
+    stats.averageConfidence = evaluations.length > 0 ? totalConfidence / evaluations.length : 0;
 
     return stats;
   }

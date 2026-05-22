@@ -7,15 +7,9 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { join, resolve } from 'path';
 import { Logger } from '../../utils/logger.js';
-import { DevFlowError } from '../../utils/errors.js';
 import fs from 'fs-extra';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const logger = new Logger('InitCommand');
 
@@ -72,7 +66,6 @@ export async function executeInit(options = {}) {
     console.log(chalk.gray('  2. Run "devflow analyze" to analyze your project'));
     console.log(chalk.gray('  3. Run "devflow research" to generate project profile'));
     console.log(chalk.gray('  4. Run "devflow run" to start development workflow'));
-
   } catch (error) {
     spinner.fail('Initialization failed');
     logger.error('Init failed:', error);
@@ -85,7 +78,7 @@ export async function executeInit(options = {}) {
  * @param {string} projectRoot - Project root path
  * @param {string} template - Template name
  */
-async function createDirectoryStructure(projectRoot, template = 'default') {
+async function createDirectoryStructure(projectRoot, _template = 'default') {
   const dirs = [
     '.ai-memory',
     '.ai-memory/project-profile',

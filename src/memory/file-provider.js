@@ -5,8 +5,8 @@
 
 import { join } from 'path';
 import fs from 'fs-extra';
-import { MemoryProtocol, MemoryCategories, MemoryEntry } from './protocol.js';
-import { MemoryError, ErrorCodes } from '../utils/errors.js';
+import { MemoryCategories, MemoryEntry, MemoryProtocol } from './protocol.js';
+import { ErrorCodes, MemoryError } from '../utils/errors.js';
 import { Logger } from '../utils/logger.js';
 
 const logger = new Logger('FileMemoryProvider');
@@ -67,7 +67,7 @@ export class FileMemoryProvider extends MemoryProtocol {
    */
   _parseFrontmatter(content) {
     const lines = content.split('\n');
-    
+
     if (lines[0] !== FRONTMATTER_DELIMITER) {
       return { metadata: {}, body: content };
     }
@@ -85,7 +85,10 @@ export class FileMemoryProvider extends MemoryProtocol {
     }
 
     const frontmatterLines = lines.slice(1, endIndex);
-    const body = lines.slice(endIndex + 1).join('\n').trim();
+    const body = lines
+      .slice(endIndex + 1)
+      .join('\n')
+      .trim();
 
     // Simple YAML parsing (for basic types)
     const metadata = {};
@@ -94,12 +97,15 @@ export class FileMemoryProvider extends MemoryProtocol {
       if (colonIndex > 0) {
         const key = line.slice(0, colonIndex).trim();
         let value = line.slice(colonIndex + 1).trim();
-        
+
         // Try to parse as number or boolean
-        if (value === 'true') value = true;
-        else if (value === 'false') value = false;
-        else if (!isNaN(value) && value !== '') value = Number(value);
-        else if (value.startsWith('[') && value.endsWith(']')) {
+        if (value === 'true') {
+          value = true;
+        } else if (value === 'false') {
+          value = false;
+        } else if (!isNaN(value) && value !== '') {
+          value = Number(value);
+        } else if (value.startsWith('[') && value.endsWith(']')) {
           // Parse array
           try {
             value = JSON.parse(value);
@@ -107,7 +113,7 @@ export class FileMemoryProvider extends MemoryProtocol {
             // Keep as string
           }
         }
-        
+
         metadata[key] = value;
       }
     }
@@ -120,10 +126,12 @@ export class FileMemoryProvider extends MemoryProtocol {
    */
   _serializeFrontmatter(metadata) {
     const lines = [FRONTMATTER_DELIMITER];
-    
+
     for (const [key, value] of Object.entries(metadata)) {
-      if (value === null || value === undefined) continue;
-      
+      if (value === null || value === undefined) {
+        continue;
+      }
+
       if (Array.isArray(value)) {
         lines.push(`${key}: ${JSON.stringify(value)}`);
       } else if (typeof value === 'object') {
@@ -132,7 +140,7 @@ export class FileMemoryProvider extends MemoryProtocol {
         lines.push(`${key}: ${value}`);
       }
     }
-    
+
     lines.push(FRONTMATTER_DELIMITER);
     return lines.join('\n');
   }
@@ -165,8 +173,10 @@ export class FileMemoryProvider extends MemoryProtocol {
         metadata,
       });
     } catch (error) {
-      if (error instanceof MemoryError) throw error;
-      
+      if (error instanceof MemoryError) {
+        throw error;
+      }
+
       throw new MemoryError(
         `Failed to read memory entry: ${error.message}`,
         ErrorCodes.MEMORY_READ_ERROR,
@@ -211,9 +221,7 @@ export class FileMemoryProvider extends MemoryProtocol {
       });
 
       // Serialize content
-      const contentStr = typeof content === 'string' 
-        ? content 
-        : JSON.stringify(content, null, 2);
+      const contentStr = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
 
       // Build file content
       const frontmatter = this._serializeFrontmatter(mergedMetadata);
@@ -231,8 +239,10 @@ export class FileMemoryProvider extends MemoryProtocol {
         metadata: mergedMetadata,
       });
     } catch (error) {
-      if (error instanceof MemoryError) throw error;
-      
+      if (error instanceof MemoryError) {
+        throw error;
+      }
+
       throw new MemoryError(
         `Failed to write memory entry: ${error.message}`,
         ErrorCodes.MEMORY_WRITE_ERROR,
@@ -285,10 +295,12 @@ export class FileMemoryProvider extends MemoryProtocol {
       const entries = [];
 
       for (const file of files) {
-        if (!file.endsWith(FILE_EXTENSION)) continue;
+        if (!file.endsWith(FILE_EXTENSION)) {
+          continue;
+        }
 
         const id = file.slice(0, -FILE_EXTENSION.length);
-        
+
         try {
           const metadata = await this.getMetadata(category, id);
           entries.push({
@@ -326,7 +338,7 @@ export class FileMemoryProvider extends MemoryProtocol {
   async search(query, options = {}) {
     const { category, limit = 10 } = options;
     const categories = category ? [category] : Object.values(MemoryCategories);
-    
+
     const results = [];
     const queryLower = query.toLowerCase();
 
@@ -395,8 +407,10 @@ export class FileMemoryProvider extends MemoryProtocol {
       const { metadata } = this._parseFrontmatter(content);
       return metadata;
     } catch (error) {
-      if (error instanceof MemoryError) throw error;
-      
+      if (error instanceof MemoryError) {
+        throw error;
+      }
+
       throw new MemoryError(
         `Failed to get metadata: ${error.message}`,
         ErrorCodes.MEMORY_READ_ERROR,
@@ -421,7 +435,7 @@ export class FileMemoryProvider extends MemoryProtocol {
   async export(options = {}) {
     const { categories } = options;
     const catsToExport = categories || Object.values(MemoryCategories);
-    
+
     const data = {
       version: '1.0',
       exportedAt: new Date().toISOString(),
@@ -452,7 +466,7 @@ export class FileMemoryProvider extends MemoryProtocol {
     for (const [category, entries] of Object.entries(data.entries || {})) {
       for (const entryData of entries) {
         const exists = await this.exists(category, entryData.id);
-        
+
         if (exists && !overwrite) {
           skipped++;
           continue;
